@@ -1,0 +1,34 @@
+# Core data stack
+pandas>=2.1.0
+numpy>=1.26.0
+scipy>=1.11.0
+
+# Econometric and statistical estimation
+statsmodels>=0.14.0
+linearmodels>=5.3.0
+scikit-learn>=1.3.0
+
+# Causal inference
+dowhy>=0.11.0
+causalml>=0.14.0
+econml>=0.15.0
+
+# Data retrieval
+yfinance>=0.2.40
+sec-edgar-downloader>=5.0.0
+pandas-datareader>=0.10.0
+requests>=2.31.0
+
+# Notebook / analysis
+jupyter>=1.0.0
+jupyterlab>=4.0.0
+ipykernel>=6.27.0
+
+# Visualisation
+matplotlib>=3.8.0
+seaborn>=0.13.0
+plotly>=5.18.0
+
+# Utilities
+tqdm>=4.66.0
+python-dotenv>=1.0.0

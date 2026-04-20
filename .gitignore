@@ -1,0 +1,49 @@
+# Virtual environments
+venv/
+env/
+.venv/
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Data — raw data is NOT committed; only processed summary outputs
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# Large model artefacts
+*.pkl
+*.joblib
+*.h5
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Credentials
+*.env
+credentials.json
+secrets/
+
+# Results — keep final figures/tables; exclude intermediate
+results/figures/*.tmp
+results/tables/*.tmp
