@@ -2,6 +2,36 @@
 
 Running log, newest first. One entry per working session.
 
+## 2026-06-05 (cont.) — Phase 0 finalised + pushed; SEC blocker ROOT-CAUSED
+
+**Phase 0 artifacts finished and shipped.**
+- `Makefile` with targets `data` / `data-sec` / `panel` / `estimate` / `placebo`
+  / `figures` / `test` / `clean` (Phase 2-5 targets fail loudly until data-sec
+  lands — by design). `requirements.lock` pins the 128-package Phase-1 env.
+  `.gitignore` now also excludes `data/interim/*` and `.virtual_documents/`.
+- Committed `91b6582` and **pushed to origin/main**. 6 tests green.
+
+**SEC blocker ROOT-CAUSED — it's a VPN, not a code or SEC-policy problem.**
+- The egress IP `149.34.242.15` geolocates to **Datacamp Limited (AS212238),
+  Dublin IE, flagged `proxy:true hosting:true`** — i.e. a datacenter VPN exit
+  node. SEC's Akamai bot-manager blocks datacenter/VPN/proxy IPs wholesale,
+  which is why *every* client got 403 regardless of User-Agent or TLS.
+- Ruled out the alternatives this session: `curl_cffi` Chrome **and** Safari TLS
+  impersonation still 403 (not a TLS-fingerprint issue); the declared UA is
+  transmitted correctly via httpbin (not a UA-clobbering issue). The two block
+  pages seen — "Request Rate Threshold Exceeded" (www) and "Undeclared Automated
+  Tool" (data) — are Akamai's canned 403s for a flagged IP.
+- **Fix (Jimmy's action):** turn off the VPN so traffic egresses from a
+  residential ISP, confirm `https://www.sec.gov/` loads in the browser, then
+  `make data-sec`. `edgar_session._egress_diagnosis()` now detects a
+  datacenter egress IP and appends a "turn off your VPN" line to `EdgarBlocked`,
+  so the failure is self-explanatory on any future clone.
+
+### Next
+1. Jimmy: disable VPN → `make data-sec` from residential network. Gates Phase 2-5.
+2. Phase 2 — build `data/processed/panel.parquet` once 13F + N-PORT land.
+3. Phase 3 — freeze `PREREGISTRATION.md`, install the conda econ stack, estimate.
+
 ## 2026-06-05 — Phase 0 complete; Phase 1 partial (reachable done, SEC blocked)
 
 **Phase 0 (repo restructure) — DONE.**

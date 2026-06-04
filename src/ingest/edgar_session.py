@@ -9,10 +9,14 @@ block responses into one clear, actionable exception:
   * HTTP 200 whose body is the "Your Request Originates from an Undeclared
     Automated Tool" interstitial,
 
-are both raised as :class:`EdgarBlocked` with guidance. We hit exactly this
-block from the build environment (egress IP 149.34.242.15 is 403-ed by SEC
-across every host and client), so downstream modules must surface it legibly
-rather than producing empty data.
+are both raised as :class:`EdgarBlocked` with guidance. SEC's bot-manager blocks
+datacenter / VPN / proxy IPs wholesale, so the most common cause of a block on an
+otherwise-correct setup is an **active VPN**. (Confirmed in development: this
+environment egresses through a Datacamp/Dublin datacenter IP, flagged proxy +
+hosting, which SEC 403s across every host, User-Agent and TLS fingerprint.)
+:func:`_egress_diagnosis` checks the live egress IP and, when it looks like a
+datacenter network, says so — so the failure explains itself instead of looking
+like a code bug.
 
 Set the User-Agent once via a gitignored ``.env`` at the repo root:
 
@@ -49,16 +53,57 @@ class EdgarBlocked(RuntimeError):
     """Raised when SEC refuses the request (403 or the interstitial page)."""
 
 
+_egress_hint: str | None = None  # computed once per process, best-effort
+
+
+def _egress_diagnosis() -> str:
+    """Best-effort one-liner naming the egress IP and flagging VPN/datacenter.
+
+    SEC blocks datacenter / VPN / proxy IPs wholesale, so an active VPN is the
+    single most common cause of a block on a correct setup. Looks the current
+    egress IP up once and caches it. Never raises — a diagnosis must not mask
+    the original error — and returns "" if the lookup is unavailable.
+    """
+    global _egress_hint
+    if _egress_hint is not None:
+        return _egress_hint
+    try:
+        import json
+        import urllib.request
+
+        url = "http://ip-api.com/json/?fields=query,country,isp,proxy,hosting"
+        with urllib.request.urlopen(url, timeout=3) as r:
+            d = json.loads(r.read())
+        ip, isp, ctry = d.get("query", "?"), d.get("isp", "?"), d.get("country", "?")
+        if d.get("proxy") or d.get("hosting"):
+            _egress_hint = (
+                f"\n>> Your egress IP {ip} ({isp}, {ctry}) is flagged as a "
+                "datacenter / VPN / proxy network, which SEC blocks wholesale. "
+                "This is almost certainly the cause: turn off any VPN and retry, "
+                "confirming the IP changes to your residential ISP."
+            )
+        else:
+            _egress_hint = (
+                f"\n>> Egress IP {ip} ({isp}, {ctry}) does not look like a "
+                "datacenter, so a VPN is probably not the cause — suspect the "
+                "User-Agent or a transient SEC rate penalty (wait, then retry)."
+            )
+    except Exception:
+        _egress_hint = ""
+    return _egress_hint
+
+
 def _guidance(detail: str) -> str:
     return (
         f"SEC EDGAR refused this request ({detail}).\n"
-        "This environment's egress IP is blocked by SEC's bot-manager — it is "
-        "NOT a code bug. To pull SEC data, run the ingestion from an unblocked "
-        "network (a normal residential connection, no datacenter VPN), e.g. a "
-        "plain terminal on your Mac, and confirm https://www.sec.gov/ loads in "
-        "your browser first. The User-Agent in use is:\n"
+        "This is NOT a code bug — SEC's bot-manager refused the connection. To "
+        "pull SEC data, run the ingestion from an unblocked network (a normal "
+        "residential connection, no datacenter VPN), e.g. a plain terminal on "
+        "your Mac, and confirm https://www.sec.gov/ loads in your browser first. "
+        "The User-Agent in use is:\n"
         f"    {USER_AGENT}\n"
         "Override it with SEC_EDGAR_UA in a .env file at the repo root."
+        f"{_egress_diagnosis()}"
     )
 
 
