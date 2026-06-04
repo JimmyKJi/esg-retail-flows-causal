@@ -39,8 +39,12 @@ try:  # optional: load .env if python-dotenv is present
 except Exception:
     pass
 
-# SEC mandates a "Name email" UA. Override in .env; this default is a fallback.
-_DEFAULT_UA = "Jimmy Ji ESG Flows Research JimmyKJi@users.noreply.github.com"
+# SEC mandates a "Name email" UA with a *real, contactable* address. SEC's filter
+# rejects non-deliverable domains — notably `noreply.github.com`-style addresses
+# return the "Undeclared Automated Tool" 403 (learned the hard way). Set your own
+# contact in a gitignored .env (SEC_EDGAR_UA=...); this default is deliberately
+# unusable so a missing .env fails closed rather than sending a fake contact.
+_DEFAULT_UA = "UNSET - declare SEC_EDGAR_UA in .env as: Your Name your-real-contact-email"
 USER_AGENT = os.environ.get("SEC_EDGAR_UA", _DEFAULT_UA)
 
 _MIN_INTERVAL = 0.15  # seconds between requests => ~6.7/s, under SEC's 10/s cap
@@ -102,7 +106,9 @@ def _guidance(detail: str) -> str:
         "your Mac, and confirm https://www.sec.gov/ loads in your browser first. "
         "The User-Agent in use is:\n"
         f"    {USER_AGENT}\n"
-        "Override it with SEC_EDGAR_UA in a .env file at the repo root."
+        "Override it with SEC_EDGAR_UA in a .env file at the repo root. Note SEC "
+        "rejects non-deliverable contacts: a 'Name email' UA with a real address "
+        "(e.g. you@gmail.com) works; noreply/github.com-style addresses 403."
         f"{_egress_diagnosis()}"
     )
 
