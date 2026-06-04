@@ -18,12 +18,18 @@ __pycache__/
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb_checkpoints
+.virtual_documents/
 
-# Data — raw data is NOT committed; only processed summary outputs
+# Data — raw and intermediate data are NOT committed; only the lineage doc and
+# processed summary outputs small enough to track. Raw pulls and interim caches
+# are reproducible from `make data`; their provenance lives in DATA_LINEAGE.md.
 data/raw/*
 !data/raw/.gitkeep
+data/interim/*
+!data/interim/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+!data/DATA_LINEAGE.md
 
 # Large model artefacts
 *.pkl

@@ -1,0 +1,59 @@
+# ESG Label or Just the Index? — reproducible pipeline
+#
+# Raw and interim data are gitignored; every target rebuilds from source.
+# Provenance for each input lives in data/DATA_LINEAGE.md. The SEC-hosted
+# targets (data-sec) require an unblocked network — see the SEC access note in
+# README.md. Phase 2-5 targets are intentionally gated: they fail loudly until
+# their upstream data (13F + N-PORT) has landed. That is by design, not a bug —
+# replace the gate with the real driver when you implement that phase.
+
+PY     := ./venv/bin/python
+PYTEST := ./venv/bin/pytest
+
+.DEFAULT_GOAL := help
+.PHONY: help data data-sec panel estimate placebo figures test clean
+
+help:  ## Show this help
+	@echo "ESG flows — pipeline targets:"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
+	  | awk 'BEGIN {FS = ":.*?## "}; {printf "  make %-10s %s\n", $$1, $$2}'
+
+# ── Phase 1: data ingestion ──────────────────────────────────────────────────
+
+data:  ## Pull reachable sources: Fama-French, S&P 500 placebo, prices (works anywhere)
+	$(PY) -m src.ingest.ff_factors
+	$(PY) -m src.ingest.sp500_events
+	$(PY) -m src.ingest.prices
+
+data-sec:  ## Pull SEC sources: 13F outcome + N-PORT treatment (REQUIRES an unblocked network)
+	@echo ">> Set SEC_EDGAR_UA in .env first (see README). Fails with EdgarBlocked on a filtered IP."
+	$(PY) -m src.ingest.edgar_13f
+	$(PY) -c "from src.ingest.nport_holdings import build_inclusion_events; build_inclusion_events(refresh=True)"
+
+# ── Phases 2-5: build + estimate (gated on data-sec) ─────────────────────────
+# Not yet runnable: each needs the 13F/N-PORT panels that data-sec produces.
+# These recipes stop the build with a clear pointer rather than failing deep in
+# Python with a missing-argument error.
+
+panel:  ## Phase 2 — build the firm x quarter panel (blocked on data-sec)
+	@echo "Phase 2 (panel) is blocked: run 'make data-sec' from an unblocked network first."
+	@echo "See README's SEC access note and PROGRESS.md."; exit 1
+
+estimate:  ## Phase 3 — event study + heterogeneity-robust staggered DiD (needs panel)
+	@echo "Phase 3 (estimate) needs data/processed/panel.parquet (make panel) and the conda econ stack."
+	@echo "See README's econometrics-stack note."; exit 1
+
+placebo:  ## Phase 4 — ESG vs S&P 500 placebo contrast (needs both matched panels)
+	@echo "Phase 4 (placebo) needs the ESG and S&P 500 panels from 'make panel'."; exit 1
+
+figures:  ## Build paper figures (needs estimates)
+	@echo "Figures need estimation output (make estimate)."; exit 1
+
+# ── Quality ──────────────────────────────────────────────────────────────────
+
+test:  ## Run the suite: reachable-data smoke + SEC-transform unit tests
+	$(PYTEST) -q
+
+clean:  ## Remove Python/pytest caches (leaves data/ and results/ untouched)
+	rm -rf .pytest_cache
+	find . -path ./venv -prune -o -name __pycache__ -type d -exec rm -rf {} +

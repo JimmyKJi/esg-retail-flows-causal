@@ -1,34 +1,32 @@
-# Core data stack
-pandas>=2.1.0
-numpy>=1.26.0
-scipy>=1.11.0
+# ── Core data ──────────────────────────────────────────────
+pandas>=2.1
+numpy>=1.26
+scipy>=1.11
+polars>=0.20          # fast 13F × institution joins
+pyarrow>=15           # parquet engine for the analysis panel
 
-# Econometric and statistical estimation
-statsmodels>=0.14.0
-linearmodels>=5.3.0
-scikit-learn>=1.3.0
+# ── Causal / econometrics ──────────────────────────────────
+pyfixest>=0.18        # event study + Sun–Abraham interaction-weighted estimator
+differences>=0.2      # Callaway–Sant'Anna staggered-adoption DiD
+linearmodels>=6.0     # panel FE / IV cross-checks
+statsmodels>=0.14     # structural-break (Chow / Quandt–Andrews) + misc
+scikit-learn>=1.3     # propensity-score / coarsened-exact matching
 
-# Causal inference
-dowhy>=0.11.0
-causalml>=0.14.0
-econml>=0.15.0
+# ── Data acquisition ───────────────────────────────────────
+requests>=2.31        # SEC EDGAR + iShares pulls (declared User-Agent, rate-limited)
+yfinance>=0.2.40      # prices / returns
+# Fama–French factors are pulled by direct download in src/ingest/ff_factors.py
+# (pandas-datareader is intentionally omitted: it is incompatible with pandas 3.x).
+lxml>=5.0             # N-PORT XML + HTML table parsing
+beautifulsoup4>=4.12  # Wikipedia S&P 500 change-list parsing
 
-# Data retrieval
-yfinance>=0.2.40
-sec-edgar-downloader>=5.0.0
-pandas-datareader>=0.10.0
-requests>=2.31.0
+# ── Viz ────────────────────────────────────────────────────
+matplotlib>=3.8
+seaborn>=0.13
 
-# Notebook / analysis
-jupyter>=1.0.0
-jupyterlab>=4.0.0
-ipykernel>=6.27.0
-
-# Visualisation
-matplotlib>=3.8.0
-seaborn>=0.13.0
-plotly>=5.18.0
-
-# Utilities
-tqdm>=4.66.0
-python-dotenv>=1.0.0
+# ── Tooling ────────────────────────────────────────────────
+pytest>=8.0
+tqdm>=4.66
+python-dotenv>=1.0
+jupyter>=1.0
+ipykernel>=6.27
