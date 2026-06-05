@@ -10,9 +10,9 @@ political legitimacy?
 prices the ESG label or merely the index — and whether that pricing is decaying
 as ESG loses political legitimacy.*
 
-**Status:** Phase 1 (data). Reachable sources ingested; SEC-hosted sources
-(13F, N-PORT) written and unit-tested but pending an unblocked network — see
-[SEC access note](#sec-access). Strategy in
+**Status:** Phase 1 (data). Reachable sources + the **N-PORT treatment** (481
+genuine ESG inclusions, 2020→2026) ingested; the **13F outcome** is the next pull
+(same path). SEC access resolved — see [SEC access note](#sec-access). Strategy in
 `Jimmy - Quant Projects Plan (ESG + HR).md`; build spec drives the phases.
 
 ---
@@ -36,7 +36,8 @@ as ESG loses political legitimacy.*
 
 ## Design at a glance
 - **Treatment:** firm enters ESG Leaders (proxied via iShares SUSL/SUSA N-PORT
-  monthly-holdings diffs). **Quarterly** event time (13F is quarterly).
+  quarterly-holdings diffs; identifier-churn adds flagged). **Quarterly** event
+  time (13F is quarterly).
 - **Primary outcome:** Δ aggregate institutional ownership and Δ # of 13F filers.
   **Secondary:** FF-adjusted cumulative abnormal return.
 - **Estimators:** event study + heterogeneity-robust staggered DiD
@@ -48,7 +49,7 @@ as ESG loses political legitimacy.*
 ## Data
 See `data/DATA_LINEAGE.md` for source, URL, date, license, and status of every
 input. Reachable & ingested: Fama-French factors, S&P 500 change events, prices.
-SEC-hosted & pending: 13F holdings (outcome), N-PORT holdings (treatment).
+SEC-hosted: N-PORT holdings (treatment) ✅ pulled; 13F holdings (outcome) — next.
 
 ## Repository
 ```
@@ -79,20 +80,24 @@ make panel estimate placebo figures
 > `conda install -c conda-forge pyfixest polars numba differences`. None are
 > needed for ingestion (Phase 1).
 
-## <a name="sec-access"></a>⚠️ SEC access note
-SEC's bot-manager returns **HTTP 403 to every client from the build
-environment's IP** (curl, urllib, requests, WebFetch) across all SEC hosts —
-even the homepage — while non-SEC sources work. The 13F + N-PORT ingestion is
-therefore written and unit-tested but must be **run from a normal residential
-connection** (no datacenter VPN). `src/ingest/edgar_session.py` raises a clear
-`EdgarBlocked` with guidance when the block is in effect.
+## <a name="sec-access"></a>SEC access note (resolved)
+SEC's Akamai bot-manager 403'd every client until **two stacked filters** were
+cleared: (1) a **datacenter/VPN egress IP** (SEC blocks those wholesale — run
+from a residential ISP with the VPN off), and (2) a **non-deliverable UA email**
+(e.g. a `…@users.noreply.github.com` address — set
+`SEC_EDGAR_UA="Name real@email.com"` in `.env`). Both fixed → 200.
+`src/ingest/edgar_session.py` raises a clear `EdgarBlocked`, now with a live
+egress-IP diagnosis, if either condition recurs.
 
 ## Honest guardrails
 Institutional (13F) flows, **not retail** (the original retail framing is dropped
 — no WRDS/Vanda access; don't overclaim retail behaviour). Quarterly → coarse
-event timing. Index membership reconstructed via an ETF/N-PORT proxy. Causal
-claims rest on the parallel-trends/placebo design holding; reported when it
-doesn't.
+event timing. Index membership reconstructed via an ETF/N-PORT proxy, and
+treatment is a CUSIP diff — so corporate-action CUSIP changes (splits,
+redomiciles, renames, mergers) can masquerade as inclusions; exact-name cases are
+auto-flagged (`corp_action_suspect`) and the changed-name remainder is reconciled
+in Phase 2. Causal claims rest on the parallel-trends/placebo design holding;
+reported when it doesn't.
 
 ## About
 Built by Jimmy Kaian Ji — KCL Philosophy BA. Applying causal-inference

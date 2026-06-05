@@ -2,6 +2,45 @@
 
 Running log, newest first. One entry per working session.
 
+## 2026-06-05 (cont. 2) — SEC UNBLOCKED end-to-end; N-PORT treatment BUILT
+
+**SEC access fully resolved — two stacked filters, both fixed.**
+- Cause 1: datacenter/VPN egress IP (Datacamp/Dublin) — fixed by turning the VPN
+  off → residential ISP. Cause 2: the UA contact email was non-deliverable
+  (`…@users.noreply.github.com`), which SEC *also* 403s — fixed with a real
+  contact in the gitignored `.env`. With both fixed, every SEC host returns 200.
+  `edgar_session._DEFAULT_UA` now fails closed (no fake contact) and
+  `_egress_diagnosis()` flags a datacenter IP so a future clone behind a VPN
+  explains itself.
+
+**N-PORT treatment BUILT — `build_inclusion_events()` (task #6 done).**
+- Discovery via browse-EDGAR atom by *series* id (SUSL S000065418, SUSA
+  S000004436 in iShares Trust CIK 1100663); holdings from each filing's
+  `primary_doc.xml`. N-PORT-P is **quarterly**, not monthly (corrected in code,
+  README, DATA_LINEAGE). As-of = `repPdDate` (quarter-end, e.g. 2026-02-28) —
+  deliberately NOT `repPdEnd` (the fund's Aug-31 fiscal-year end, a constant that
+  would collapse quarters).
+- Pulled SUSL+SUSA 2020→2026: **946 raw add/drop events** (494 adds). Persisted
+  `data/interim/esg_index_holdings.parquet` (membership panel) +
+  `esg_inclusion_events.parquet` (treatment). Reconstitution spikes show up as
+  expected (SUSL 2023-08: 62 adds, 2022-08: 55).
+- **Data-quality finding (matters for identification):** a pure CUSIP diff turns
+  corporate actions into fake inclusions — ~20% of adds have a same-quarter
+  name-similar drop. Added a conservative `corp_action_suspect` flag (exact
+  normalized-name same-quarter add+drop = split/redomicile churn): **27 flagged
+  → 481 genuine inclusions.** Changed-name renames/mergers (AXA Equitable→
+  Equitable; BB&T+SunTrust→Truist; Arconic→Howmet) evade exact-name matching and
+  are a documented Phase-2 reconciliation step (not silently dropped).
+- 6 tests still green (pure cores unchanged).
+
+### Next
+1. Task #7 — 13F outcome: run the `edgar_13f` half of `make data-sec` (quarterly
+   bundles → `aggregate_ownership`; handle the 2023-01 $thousands→$ unit change).
+2. Task #8 / Phase 2 — firm×quarter panel: align N-PORT fiscal-quarter as-of
+   dates (Feb/May/Aug/Nov) to 13F calendar quarters (Mar/Jun/Sep/Dec); join
+   treatment + outcome + prices + FF + S&P 500 placebo; reconcile changed-name
+   corp actions; exclude `corp_action_suspect` events.
+
 ## 2026-06-05 (cont.) — Phase 0 finalised + pushed; SEC blocker ROOT-CAUSED
 
 **Phase 0 artifacts finished and shipped.**

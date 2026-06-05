@@ -2,27 +2,28 @@
 
 Every input: exact source, URL, date pulled, license, status. Raw files live
 under `data/raw/` (gitignored — never committed). Reproduce with `make data`
-(reachable sources) and `make data-sec` (SEC sources, requires an unblocked
-network — see the access note).
+(reachable sources) and `make data-sec` (SEC sources — run from a residential
+network with a real-email UA; see the access note).
 
-_Last updated: 2026-06-05 (Phase 1)._
+_Last updated: 2026-06-05 (Phase 1 — N-PORT treatment pulled)._
 
 ## Treatment — ESG-index inclusion events  **(LOCKED: SEC Form N-PORT-P)**
 
 | field | value |
 |---|---|
 | What | Firm enters the MSCI USA (Extended) ESG Leaders index. Proxied by the holdings of iShares **SUSL** (ESG MSCI USA Leaders) and **SUSA** (MSCI USA ESG Select), which track the index. An add into the ETF ≈ an inclusion event. |
-| Source | SEC EDGAR, Form **N-PORT-P** (monthly fund portfolio holdings, structured XML) |
-| URL | `https://efts.sec.gov/LATEST/search-index` (locate filings) → `https://www.sec.gov/Archives/edgar/data/...` (XML) |
-| Method | Diff consecutive monthly snapshots; CUSIP present at month *t* but not *t−1* = inclusion. Code: `src/ingest/nport_holdings.py`. |
+| Source | SEC EDGAR, Form **N-PORT-P** (public fund portfolio holdings, structured XML — filed **quarterly**, as-of the fiscal-quarter-end `repPdDate`) |
+| URL | browse-EDGAR atom by fund *series* id (`?action=getcompany&CIK=S000065418&type=NPORT-P&output=atom`) → `https://www.sec.gov/Archives/edgar/data/1100663/<accession>/primary_doc.xml` |
+| Method | Diff consecutive quarterly snapshots; CUSIP present at quarter *t* but not *t−1* = inclusion. Same-quarter exact-name add+drop pairs (split/redomicile CUSIP churn) flagged `corp_action_suspect`. Code: `src/ingest/nport_holdings.py`. |
 | License | US Government work — public domain |
-| Date pulled | **Not yet pulled** — blocked from this environment (see access note) |
+| Date pulled | 2026-06-05 — SUSL+SUSA quarterly N-PORT (2020→2026): 946 raw events (494 adds); 27 flagged as identifier churn → **481 genuine inclusions**. CUSIP is the join key (tickers absent in N-PORT). |
+| Caveat | As-of dates are fiscal-quarter-ends (Feb/May/Aug/Nov for SUSL) — offset ~1 month from 13F calendar quarters (Mar/Jun/Sep/Dec); aligned in Phase 2. **Changed-name** renames/mergers (AXA Equitable→Equitable; BB&T+SunTrust→Truist) evade the exact-name flag and are reconciled in Phase 2 before events become treatment. |
 
 **Why N-PORT, not the build plan's first suggestions?** The plan offered (1) an
 iShares-holdings-CSV-via-Wayback proxy and (2) MSCI press releases. During Phase 1
 discovery the Wayback Machine returned **no usable captures** of the iShares
 holdings endpoint, and the live iShares CSV is a single current snapshot with no
-history. N-PORT-P gives free, structured *monthly* holdings back to ~2019 and is
+history. N-PORT-P gives free, structured *quarterly* holdings back to ~2019 and is
 the robust source. This is the locked Phase 1 decision.
 
 ## Primary outcome — institutional flows (13F)
@@ -35,7 +36,7 @@ the robust source. This is the locked Phase 1 decision.
 | Method | Parse `INFOTABLE.tsv` + `SUBMISSION.tsv`; aggregate per CUSIP×quarter. Code: `src/ingest/edgar_13f.py`. **Unit-tested** (`tests/test_edgar_transforms.py`). |
 | Caveat | SEC changed `VALUE` from $thousands to whole $ on/after 2023-01 — normalise by `FILING_DATE`. 13F is quarterly → event time is in **quarters**. |
 | License | US Government work — public domain |
-| Date pulled | **Not yet pulled** — blocked (see access note) |
+| Date pulled | **Not yet pulled** — next step; runs via `make data-sec` (access resolved, see note) |
 
 ## Placebo sample — generic (non-ESG) index inclusions  ✅ pulled
 
@@ -70,19 +71,22 @@ the robust source. This is the locked Phase 1 decision.
 
 ---
 
-## ⚠️ SEC EDGAR access note (Phase 1 blocker)
+## SEC EDGAR access note (resolved)
 
-From the build environment, **every** SEC host (`www.sec.gov`, `data.sec.gov`,
-`efts.sec.gov`) returns **HTTP 403 / "Undeclared Automated Tool"** for **every**
-client tried (curl, Python urllib, Python requests, WebFetch) — even the bare
-homepage — while non-SEC sources (Dartmouth, Wikipedia, Yahoo, GitHub) work.
-Egress IP at time of testing: `149.34.242.15`. This is **IP-level blocking by
-SEC's Akamai bot-manager**, not a code or User-Agent bug.
+SEC's Akamai bot-manager initially returned **HTTP 403 / "Undeclared Automated
+Tool"** to every client from this setup. Root cause was **two stacked filters**,
+both now resolved:
 
-Consequence: the two SEC-hosted inputs (13F outcome, N-PORT treatment) cannot be
-pulled here. Their ingestion code is written, compliant, and (for the
-parse/aggregate/diff cores) unit-tested; it must be **run from an unblocked
-network** — a normal residential connection with no datacenter VPN. Set your
-contact UA via `.env` (`SEC_EDGAR_UA=Your Name you@email.com`) and run
-`make data-sec`. `src/ingest/edgar_session.py` raises a clear `EdgarBlocked`
-with guidance if the block persists.
+1. **Datacenter/VPN egress IP.** The egress IP at first testing
+   (`149.34.242.15` — Datacamp/Dublin, flagged `proxy+hosting`) is a datacenter
+   exit node, which SEC blocks wholesale. Fix: run from a residential ISP with
+   the VPN off (verified once egress became a residential IP).
+2. **Non-deliverable User-Agent email.** SEC also 403s a UA whose contact email
+   is undeliverable (e.g. a `…@users.noreply.github.com` address). Fix: set
+   `SEC_EDGAR_UA="Your Name your-real@email.com"` in a gitignored `.env`.
+
+With both fixed, every SEC host returns 200 and the N-PORT treatment is pulled;
+13F (outcome) ingestion runs the same way via `make data-sec`.
+`src/ingest/edgar_session.py` still raises a clear `EdgarBlocked` — now with a
+live egress-IP diagnosis — if either condition recurs, so a future clone behind a
+VPN explains itself rather than looking like a code bug.
