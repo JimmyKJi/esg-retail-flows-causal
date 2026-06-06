@@ -85,11 +85,12 @@ echo "SEC_EDGAR_UA=Your Name you@email.com" > .env
 make data-sec        # 13F + N-PORT
 make panel estimate placebo figures
 ```
-> **Econometrics stack note.** `pyfixest`/`differences`/`polars` need prebuilt
-> binaries; on the bleeding-edge numpy/pandas in this venv they try (and fail) to
-> build from source. Install them on the analysis machine via
+> **Econometrics stack note.** `pyfixest`/`differences`/`polars`/`numba` are
+> pinned in `requirements.txt` and run in this venv — estimation and the full
+> test suite pass locally. If a fresh `pip install` can't build the wheels for
+> your numpy/pandas, fall back to
 > `conda install -c conda-forge pyfixest polars numba differences`. None are
-> needed for ingestion (Phase 1).
+> needed for ingestion (Phase 1) — only for estimation (Phase 3+).
 
 ## <a name="sec-access"></a>SEC access note (resolved)
 SEC's Akamai bot-manager 403'd every client until **two stacked filters** were
