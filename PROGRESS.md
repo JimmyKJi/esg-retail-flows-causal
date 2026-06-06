@@ -2,6 +2,57 @@
 
 Running log, newest first. One entry per working session.
 
+## 2026-06-06 (cont. 2) — RESEARCH NOTE WRITTEN + FULL ACCURACY AUDIT
+
+**The paper is drafted (`paper/paper.md`) and the whole repo has been swept for
+inaccuracies. An independent audit confirmed every reported number is accurate to
+rounding and found no bias-inducing bug in the build/estimation layer; the defects
+were documentation-level (false "unit-tested" claims, a stale matcher docstring,
+and three count reconciliations) and are now fixed. 40 tests still green.**
+
+**1. Paper.** `paper/paper.md` — full research note: intro, institutional setting +
+H1–H4, data, empirical strategy, results (H1/H2/H3/H4), normative discussion,
+8-item limitations, conclusion, 11 references. Embeds the 3 figures + Table 1
+(windowed post-ATT by outcome/arm) and the H2/H3 verdict table. All numbers sourced
+from `results/*.csv`.
+
+**2. Independent audit (subagent, build-layer + paper numbers + cross-doc).**
+Confirmed: 2023 13F VALUE ×1000 units correct; event-time alignment correct;
+matching baseline at g−1 (no look-ahead); CAR window no leakage; pre-trends Wald
+correct; contrast SEs (independent-arm `np.hypot`) documented. **No estimation bug.**
+
+**3. Inaccuracies fixed (the "rid of bugs" pass).**
+- Removed two false **"unit-tested"** claims: the H4 classifier (`paper.md` §5.4,
+  `PROGRESS` H4 section) and the crosswalk (`DATA_LINEAGE` source row) — these are
+  *implemented/validated*, not unit-tested (no `test_crosswalk.py`/heterogeneity test).
+- `crosswalk.py` module docstring rewritten: it described a *conservative
+  unique-subset* fallback, but the code does a **prominence tie-break** (highest
+  13F-row support wins) — now matches the function docstring + behaviour.
+- Table 1 footnote added clarifying Callaway-Sant'Anna returns **no** pre-trend, so
+  the pre-trend columns are companion tests (TWFE on the full pool; Sun-Abraham on
+  the matched pool).
+- README "Heterogeneity" point flagged as coded-but-not-estimable.
+
+**4. Count reconciliations (verified against the local parquet, then documented).**
+- **124 → 123:** the 124 matched S&P add-*events* collapse to 123 unique CUSIPs —
+  one issuer (CUSIP 35137L105) was S&P-added twice in-window. Matched-CUSIP set ==
+  panel placebo-treated set exactly (0 diff both directions).
+- **101 vs 65:** matching ran on 101/123 placebo firms (22 lack a baseline g−1),
+  *including* the 58 `both_treated`; the headline H2 contrast keeps only the 65
+  clean-generic (`both_treated` excluded) = `n_treated` in `summary.csv`. ESG matched
+  332/334 (2 lack a baseline g−1). All written into `DATA_LINEAGE`.
+- **CAR coverage:** 124 add-events = 99 ok + 20 insufficient-pre + 3 no-prices +
+  2 date-edge (was mis-stated as "99/20/3").
+
+**5. New committed artifact.** `results/car_summary.csv` — the [−5,+5] CAR headline
+(n=99, +1.35%, t=1.55, 54% positive) + full status breakdown, so the paper's CAR
+numbers are reproducible from a tracked file (the parquet is gitignored).
+
+### Next
+- Robustness battery (PSM↔CEM↔full, ±3/±6 windows, winsorise, drop COVID quarters,
+  drop `ever_dropped`) needs the conda econ stack — run on an analysis machine.
+- H4 only becomes estimable by re-ingesting raw 13F INFOTABLE keyed by CIK.
+
 ## 2026-06-06 (cont.) — PHASE 3 ESTIMATION: STAGGERED DiD + EVENT STUDY (task #10 / Phase 3 done)
 
 **The headline is a clean null, honestly reported: the apparent "ESG inclusion →
@@ -58,7 +109,7 @@ the expected power outcome; reported as not-supported, direction noted.
 
 **5. H4 (passive/active, ESG-badged heterogeneity) — NOT estimable.** The 13F
 outcome was cached as cusip×quarter aggregates, so per-filer manager (CIK)
-identity is gone. The *classification* methodology is implemented and unit-tested
+identity is gone. The *classification* methodology is implemented
 (`classify_passive`, `classify_esg_filers`); `split_passive_active` raises the
 canonical data-limitation note. Recorded honestly (`results/H4_NOT_ESTIMABLE.txt`).
 

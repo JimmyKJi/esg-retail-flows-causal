@@ -18,9 +18,12 @@ Two robustness choices matter:
 
 The matcher normalises punctuation, unicode dashes, parentheticals and generic
 corporate suffixes, then (a) tries an exact normalised match and (b) falls back
-to a *conservative* token-subset match (the query's tokens are a subset of
-exactly one candidate's tokens — so "Air Products" → "Air Products & Chemicals"
-but an ambiguous subset is left unmatched). Coverage is reported, not assumed.
+to a token-subset match resolved by *prominence*: among candidates whose tokens
+are a superset of the query's (so "Air Products" → "Air Products & Chemicals"),
+the one carrying the most 13F filer-rows wins rather than the query being rejected
+as ambiguous. Empirically this lifts S&P-add coverage from 79% to 92% with no
+observed false positives (details in match_names_to_cusip). Coverage is reported,
+not assumed.
 
 Run:  python -m src.build.crosswalk
 """

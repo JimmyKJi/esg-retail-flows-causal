@@ -85,9 +85,9 @@ the robust source. This is the locked Phase 1 decision.
 | field | value |
 |---|---|
 | What | A CUSIP→issuer-name map so the ticker/name-keyed S&P 500 placebo can be matched onto the CUSIP-keyed 13F panel (CUSIP is licensed — no free authoritative ticker→CUSIP table exists). |
-| Source | Derived — pools the `NAMEOFISSUER`+`CUSIP` columns from **every cached 13F INFOTABLE** (equity rows only, PUTCALL blank), taking each CUSIP's modal name by filer-row support. Code: `src/build/crosswalk.py`, unit-tested via the placebo path. |
+| Source | Derived — pools the `NAMEOFISSUER`+`CUSIP` columns from **every cached 13F INFOTABLE** (equity rows only, PUTCALL blank), taking each CUSIP's modal name by filer-row support. Code: `src/build/crosswalk.py` (match coverage validated by the reported exact/subset/miss rates, not a dedicated unit test). |
 | Output | `data/interim/cusip_names.parquet` (gitignored) — **79,944 equity CUSIPs**. |
-| Caveat | Name matching is imperfect: exact-normalised first, then a **prominence-tie-break token-subset** fallback (highest-13F-support superset wins). On S&P 500 adds since 2019 this gives **92% coverage (124/135: 105 exact + 19 subset + 11 miss)**; misses are recent spin-offs/IPOs/renames. Coverage is reported by `match` ∈ {exact, subset, miss}, not assumed. |
+| Caveat | Name matching is imperfect: exact-normalised first, then a **prominence-tie-break token-subset** fallback (highest-13F-support superset wins). On S&P 500 adds since 2019 this gives **92% coverage (124/135: 105 exact + 19 subset + 11 miss)**; misses are recent spin-offs/IPOs/renames. These 124 matched add-events resolve to **123 unique CUSIPs** (one issuer, CUSIP 35137L105, was S&P-added twice in-window) — exactly the placebo-treated count the panel carries. Coverage is reported by `match` ∈ {exact, subset, miss}, not assumed. |
 
 ## Processed output — S&P 500 placebo arm  ✅ built (Phase 2b)
 
@@ -105,7 +105,7 @@ the robust source. This is the locked Phase 1 decision.
 | What | Per-cohort matched comparison samples for both arms — a robustness design alongside the full clean-control set. |
 | Source | Derived — `src/build/matching.py` (PSM = pooled propensity with baseline-quarter FE + nearest-neighbour on the logit; CEM = quantile-bin exact strata), run symmetrically for ESG and S&P. Unit-tested (`tests/test_matching.py`). |
 | Method | Matched at the **baseline quarter g−1** (calendar/level confounding differenced out by the match) on pre-treatment institutional-ownership covariates the CUSIP panel carries directly: `log_value` (size proxy), `log_shares`, `n_filers` (breadth). Controls are never-treated for the arm (ESG: clean_control; S&P: never-member). |
-| Output | `data/processed/matched_{esg,sp500}_{psm,cem}.parquet` (gitignored). ESG **332/332**, S&P **101/101** matched, 0 unmatched. Balance: the naive pool sits **>2 SDs** from treated on size (|SMD| ≈ 2.1–2.5); matching collapses this to **\|SMD\| < 0.05 (CEM) / < 0.15 (PSM)**. |
+| Output | `data/processed/matched_{esg,sp500}_{psm,cem}.parquet` (gitignored). ESG **332/332** matched (of 334 treated; 2 lack an estimable baseline g−1), S&P **101/101** matched (of 123 placebo-treated; 22 lack a baseline g−1), 0 unmatched. The 101 matched S&P firms still include the 58 `both_treated`; the headline H2 contrast in `did.py` runs only on the **65 clean-generic** firms (`both_treated` excluded), which is the `n_treated` reported in `results/summary.csv`. Balance: the naive pool sits **>2 SDs** from treated on size (|SMD| ≈ 2.1–2.5); matching collapses this to **\|SMD\| < 0.05 (CEM) / < 0.15 (PSM)**. |
 | Caveat | Sector (GICS, free only for current S&P members) and a price-based liquidity measure are **not** in the CUSIP panel — accepted as optional covariates when joined in, not silently omitted. |
 
 ## Processed output — FF-adjusted CAR (secondary outcome)  ✅ built (Phase 2b)
@@ -114,7 +114,7 @@ the robust source. This is the locked Phase 1 decision.
 |---|---|
 | What | The *price* reaction to inclusion: a Fama-French five-factor event-study cumulative abnormal return, triangulating the primary 13F-flow outcome. |
 | Source | Derived — `src/build/car.py` (market model on excess returns over a ≈1yr pre-event estimation window; abnormal = actual−predicted; CAR = sum over the event window). Prices from `yfinance`, factors from the FF table. Unit-tested (`tests/test_car.py`). |
-| Output | `data/processed/car_sp500.parquet` (gitignored). Recovers the **modern S&P 500 index effect**: CAR[−5,+5] = **+1.35% (t=1.55, n=99, 54% positive)**; tight windows ≈0. Coverage: 99 ok, 20 insufficient pre-history (recent IPOs), 3 delisted (CTLT/FRC/CDAY). |
+| Output | `data/processed/car_sp500.parquet` (gitignored); headline committed to `results/car_summary.csv` so the figure is reproducible from the repo. Recovers the **modern S&P 500 index effect**: CAR[−5,+5] = **+1.35% (t=1.55, n=99, 54% positive)**; tight windows ≈0. Coverage (124 add-events): 99 ok, 20 insufficient pre-history (recent IPOs), 3 no-prices/delisted (CTLT/FRC/CDAY), 2 date-edge (event window out-of-bounds / event after data end). |
 | Caveat | **Runs on the S&P placebo arm, not the ESG arm — by data necessity, stated plainly.** A daily event study needs a priceable ticker *and* a precise date; S&P adds have both (Wikipedia effective dates + tickers), but the ESG inclusions have **neither at resolution**: there is no free CUSIP→ticker bridge for ESG-only firms, and N-PORT dates inclusion only at the fund's *fiscal quarter-end* (quarterly, not daily). So the generic-inclusion CAR is the deliverable; the ESG question stays on the fully-covered quarterly flow design. |
 | License | Derived from Yahoo (research use) + FF (academic) inputs. |
 

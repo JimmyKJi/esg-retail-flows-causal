@@ -1,0 +1,441 @@
+---
+title: "ESG Label or Just the Index? Causal Evidence on Institutional Flows Around ESG-Index Inclusion"
+author: "Jimmy Kaian Ji"
+date: "2026-06-06"
+abstract: >
+  When a stock enters an ESG index, does institutional capital flow in because
+  the market values the *ESG label*, or merely because of the *mechanical
+  index-inclusion* demand shock that any index addition produces? Using SEC
+  Form 13F institutional holdings (2019Q1–2026Q1) and a staggered
+  difference-in-differences design with heterogeneity-robust estimators
+  (Callaway–Sant'Anna 2021; Sun–Abraham 2021), I estimate the dynamic effect of
+  inclusion in the MSCI USA (Extended) ESG Leaders index — proxied through
+  iShares ESG-ETF N-PORT holdings — on ownership breadth (number of 13F filers)
+  and depth (log shares held). The identification centrepiece is a **placebo
+  arm**: the identical estimator applied to generic S&P 500 additions, so the
+  ESG-specific effect is the difference between the two. I find **no support for
+  an ESG-specific flow premium**. Inclusion is associated with a rise in
+  ownership breadth of roughly +28 13F filers, but (i) the institutional-flow
+  response to a generic S&P 500 addition is far larger (~+149 filers), so the
+  ESG-minus-generic contrast is large, negative, and statistically significant
+  (−121 filers, p = 0.001); and (ii) the mandatory pre-trends test fails for the
+  ESG arm on every breadth and depth specification, so per the frozen
+  pre-registration decision rule even the level estimate is not interpreted as
+  clean causal evidence. The one outcome whose ESG pre-trends pass (log dollar
+  value) shows a precise zero. A post-2022 "legitimacy decay" split is
+  signed in the predicted (declining) direction but is statistically
+  insignificant and underpowered. The result is a methodologically transparent
+  null: what looks like an ESG capital-allocation effect is, on this evidence,
+  the index-inclusion mechanism — a finding with direct implications for SFDR,
+  SDR, and SEC disclosure regimes that treat ESG ratings as signals that *lead*
+  capital.
+---
+
+# 1. Introduction
+
+A central premise of the modern sustainable-finance architecture is that ESG
+ratings and labels move capital. The EU's Sustainable Finance Disclosure
+Regulation (SFDR), the UK's Sustainability Disclosure Requirements (SDR), and the
+U.S. SEC's climate-disclosure rule all rest, implicitly, on the idea that an ESG
+designation is an *informative signal* that reallocates investment toward
+better-rated firms. If that premise is false — if the capital that appears to
+follow ESG labels is in fact following ordinary index mechanics, or is not
+following the *label* at all — then the normative case for that regulatory
+apparatus is weaker than it appears.
+
+This paper asks a narrow, testable version of that question. When a stock is
+**added to an ESG index**, does institutional capital causally flow in, and is
+that response **ESG-specific** or merely the **mechanical index-inclusion**
+effect that *any* index addition produces? The mechanical effect is well
+established: index additions move prices and ownership because index-tracking
+demand is price-inelastic and arbitrage is limited (Shleifer 1986; Harris and
+Gurel 1986; Wurgler and Zhuravskaya 2002; Chang, Hong and Liskovich 2015). The
+open question is whether ESG inclusion does anything *beyond* that baseline.
+
+The empirical challenge is that ESG inclusion and ordinary index mechanics are
+confounded by construction — ESG indices are themselves indices. The design here
+addresses this with a **placebo arm**: I run the *same* staggered-DiD estimator
+on generic S&P 500 additions over the same window, and define
+
+$$\text{ESG-specific effect} = \widehat{\text{ATT}}(\text{ESG inclusion}) - \widehat{\text{ATT}}(\text{S\&P 500 inclusion}).$$
+
+If ESG inclusion only reproduces the mechanical effect, this difference is zero;
+if the label carries independent allocative weight, it is positive.
+
+Three features make this more than another ESG regression. First, the design is
+**pre-registered**: hypotheses, outcomes, sample, estimators, and a pre-trends
+decision rule were frozen in `PREREGISTRATION.md` before any treatment effect was
+estimated. Second, the estimators are **heterogeneity-robust** — Callaway and
+Sant'Anna (2021) and Sun and Abraham (2021), not the two-way fixed-effects
+estimator that is biased under staggered adoption with heterogeneous effects
+(Goodman-Bacon 2021). Third, the **reporting is honest about identification
+failure**: the pre-trends test is treated as load-bearing, and where it fails the
+paper says so rather than presenting a contaminated coefficient as causal.
+
+**Findings.** I find no support for an ESG-specific flow premium. ESG-Leaders
+inclusion is associated with an increase in ownership breadth of about +28 13F
+filers over the first four post-inclusion quarters, but a generic S&P 500
+addition is associated with a far larger increase (~+149 filers); the
+ESG-minus-generic contrast is −121 filers (p = 0.001). The ordering — ESG
+response ≤ generic response — is robust across all three estimators and both
+control pools. On ownership *depth* (log shares) the ESG effect is a precise
+zero. Crucially, the ESG arm fails the pre-trends test on every breadth/depth
+specification, so the level estimates are reported with that caveat attached, not
+as clean causal effects; the single specification whose ESG pre-trends pass (log
+dollar value) returns a zero effect. A post-2022 cohort split is signed toward
+"legitimacy decay" but is statistically insignificant and underpowered. The
+heterogeneity hypothesis (passive vs. active, ESG-badged vs. not) is not
+estimable from the assembled data and is reported as a data limitation.
+
+The contribution is therefore less a positive effect than a **credible,
+transparent null** built on a placebo-identified, pre-registered design — and an
+argument that the burden of proof for "ESG labels lead capital" is not met by the
+institutional-flow data once the index mechanism is differenced out.
+
+# 2. Institutional setting and hypotheses
+
+**ESG-index inclusion.** The treatment is entry into the MSCI USA (Extended) ESG
+Leaders index. Because the index membership list is licensed, I proxy inclusion
+through the holdings of two iShares ETFs that track MSCI USA ESG indices — SUSL
+(ESG MSCI USA Leaders) and SUSA (MSCI USA ESG Select) — disclosed quarterly to
+the SEC on Form N-PORT-P. A CUSIP present in the fund at quarter *t* but absent at
+*t−1* is treated as an inclusion event (Section 3). This is an ETF/N-PORT *proxy*
+for index membership, not the index itself — a limitation stated plainly
+throughout.
+
+**The mechanical benchmark.** S&P 500 additions are the canonical generic
+index-inclusion event and the natural placebo: they generate index-tracking
+demand with no ESG content. Running the identical estimator on S&P 500 adds
+isolates the ESG-specific component of any inclusion response.
+
+**Hypotheses (pre-registered, frozen before estimation).**
+
+- **H1 (inclusion → flows).** ESG-Leaders inclusion raises institutional
+  ownership breadth (`n_filers`) and depth (`log_shares`) over event-quarters
+  0…+4.
+- **H2 (ESG-specific effect — primary).** The inclusion effect for ESG adds
+  exceeds the effect for generic S&P 500 adds: `ATT(ESG) − ATT(S&P) > 0`.
+- **H3 (legitimacy decay — original contribution).** The response attenuates for
+  cohorts included on/after 2022Q1, as ESG investing becomes politically
+  contested: `ATT(late) − ATT(early) < 0`.
+- **H4 (heterogeneity).** The response concentrates in passive and ESG-badged
+  13F filers relative to active / non-badged filers.
+
+The **decision rule**, also pre-registered: H1–H3 are "supported" only if signed
+as predicted *and* the pre-trends test passes for the relevant sample; H4 is
+descriptive.
+
+# 3. Data
+
+All inputs, with source, URL, license, and pull date, are catalogued in
+`data/DATA_LINEAGE.md`. Raw and intermediate files are reproducible from `make
+data` / `make data-sec` and are not committed; the small estimation outputs are.
+
+**Treatment — ESG inclusion (SEC Form N-PORT-P).** Quarterly N-PORT holdings of
+SUSL and SUSA, 2020–2026, diffed across consecutive snapshots. Of 946 raw
+add/drop events (494 adds), 27 are flagged as identifier churn (same-quarter
+exact-name add+drop pairs from CUSIP changes), leaving **481 genuine
+inclusions**. The cohort for each treated firm is its **first** inclusion
+quarter. Treatment is defined as first inclusion and treated as absorbing
+(intention-to-treat), even though 177/334 firms later exit the index — so
+long-horizon ATTs are attenuated by exits, reported rather than corrected.
+
+**Outcome — institutional holdings (SEC Form 13F).** The SEC's quarterly Form 13F
+structured data sets. After parsing each bundle's `INFOTABLE`, taking the modal
+period of report, deduplicating to the latest filing per manager (CIK), and
+rolling up by CUSIP, the outcome panel has **988,292 CUSIP×quarter rows across 29
+quarters (2019Q1–2026Q1)**. Two outcomes are primary: `n_filers` (breadth: the
+count of distinct 13F filers holding the CUSIP) and `log_shares` (depth: log
+aggregate shares). Shares and filer counts are immune to the 2023 change in 13F
+dollar-value reporting units; `log_value` is therefore secondary.
+
+**Analysis panel.** Joining outcome, treatment, and membership flags yields
+`panel.parquet`: **904,589 rows, 95,572 CUSIPs, 29 quarters**, with **334
+datable ESG inclusions**, **95,035 clean (never-treated) controls**, and 203
+firms held out of the control pool (left-censored members and corp-action-suspect
+adds). CUSIP coverage of the treatment events is 334/335 (99.7%).
+
+**Placebo arm — S&P 500 additions.** S&P 500 change events from Wikipedia's
+constituent-change table, mapped from ticker/name to CUSIP through a crosswalk
+built from the 13F issuer-name fields (92% match coverage on post-2019 adds). The
+panel carries a symmetric `sp500_*` cohort structure. Of 123 placebo-treated
+CUSIPs, **58 are *both* ESG- and S&P-treated** (a contamination flag) and are
+excluded, leaving **65 clean-generic** firms (S&P-added, never ESG-treated) as the
+primary placebo.
+
+**Matched controls.** The full clean-control pool is dominated by micro-caps; the
+treated firms are large index-eligible names, sitting >2 standard deviations above
+the pool mean on size (|SMD| ≈ 2.1–2.5). I therefore build per-cohort matched
+samples at the baseline quarter g−1 on pre-treatment ownership covariates
+(`log_value`, `log_shares`, `n_filers`), using both propensity-score matching
+(PSM) and coarsened exact matching (CEM; Iacus, King and Porro 2012), run
+symmetrically for both arms. Matching collapses imbalance to |SMD| < 0.05 (CEM).
+The CEM-matched pool is the credible comparison; the full pool is the
+pre-registered (but confounded) headline, reported for transparency.
+
+**Secondary price outcome.** A Fama–French five-factor cumulative abnormal return
+(CAR) around inclusion, computed on the **S&P 500 placebo arm only**: a daily
+event study needs a priceable ticker and a precise date, which the ESG arm lacks
+(no free CUSIP→ticker bridge; N-PORT dates inclusion only at the fund's fiscal
+quarter-end). The CAR recovers the *modern, arbitraged-era* S&P 500 index effect
+— CAR[−5,+5] = +1.35% (t = 1.55, n = 99) — consistent with the post-2010s
+literature, and serves as a sanity check that the placebo arm behaves as the
+index-effect literature predicts.
+
+# 4. Empirical strategy
+
+Because inclusions are staggered across quarters and treatment effects are
+plausibly heterogeneous across cohorts and horizons, the two-way fixed-effects
+(TWFE) event study is biased: it contaminates clean comparisons with "forbidden"
+comparisons that use already-treated units as controls (Goodman-Bacon 2021). I
+therefore use two heterogeneity-robust estimators as the headline and retain TWFE
+only as a labelled baseline.
+
+**Callaway–Sant'Anna (2021).** Group-time average treatment effects ATT(g,t)
+estimated against never-treated (clean) controls via the `differences` package,
+then aggregated to a dynamic event-study path. This is the headline dynamics
+estimator.
+
+**Sun–Abraham (2021).** An interaction-weighted (IW) event study, implemented
+manually as a saturated regression of the outcome on cohort × event-time
+indicators (reference event-time −1) with firm and calendar-quarter fixed
+effects and firm-clustered standard errors, then aggregated to ATT(e) using
+cohort-share weights with a delta-method covariance. The IW aggregation
+normalises weights over the cohort × event cells that survive collinearity drops,
+so that a dropped post-window cell does not bias the aggregated coefficient toward
+zero. This estimator carries the windowed post-ATT and the pre-trends inference,
+and is the estimator used for the H2 and H3 contrasts.
+
+**Windowed ATT and pre-trends.** The summary effect is the average ATT over the
+pre-registered post-window e ∈ [0, +4]. The **mandatory pre-trends test** is a
+joint Wald test that the pre-period coefficients at event-times {−4, −3, −2}
+equal zero, distributed χ²(3); parallel pre-trends are *not rejected* (the test
+"passes") when p ≥ 0.05. Per the pre-registration, a failed pre-trends test means
+the corresponding level estimate is not interpreted as clean causal evidence.
+
+**Control pools.** Every estimator runs on (i) the full clean-control pool — the
+pre-registered headline, which the pre-registration itself anticipated would be
+confounded because treated firms are large and the pool is micro-caps on a steep
+secular ownership uptrend — and (ii) the CEM-matched pool, which balances the
+*level* at baseline. Matching the level does not by itself remove a differential
+*trend*, so pre-trends can still fail under selection-into-index growth; this is
+exactly what the data show.
+
+# 5. Results
+
+## 5.1 H1 — Inclusion and institutional flows
+
+![Event study: ESG-Leaders inclusion and institutional ownership. Left,
+ownership breadth (number of 13F filers); right, depth (log aggregate shares).
+The faded dotted line is the confounded full-control Callaway–Sant'Anna path; the
+solid line is the CEM-matched headline with 95% CIs; the dashed line is the
+Sun–Abraham matched estimate. The shaded pre-period coefficients are the
+parallel-trends test.](figures/event_study.png)
+
+On the credible CEM-matched design, ESG-Leaders inclusion raises ownership
+breadth by **+27.6 filers** (Sun–Abraham windowed post-ATT, se 9.4) — but the
+joint pre-trends test **fails** (p = 0.001). Ownership *depth* is a precise
+**≈ 0** (−0.004 log points, se 0.085; pre-trends also fail, p = 0.027). The
+full-pool estimate is larger (+79.7 filers) and far more confounded (pre-trend
+p ≈ 1.6 × 10⁻²⁴), as anticipated.
+
+Matching balances the level at the baseline quarter but not the pre-existing
+*trend*: index-eligibility selection means treated firms are already gaining
+breadth before inclusion, so the pre-period coefficients are non-zero even in the
+matched sample. Under the pre-registered decision rule, **H1 is therefore not
+cleanly supported**: the breadth point estimate is positive but pre-trend
+contaminated, and the depth estimate is zero. The one ESG specification whose
+pre-trends *pass* is the secondary outcome `log_value` (p = 0.488) — and there
+the effect is a precise zero (−0.082, se 0.095), reinforcing rather than
+overturning the no-effect reading.
+
+## 5.2 H2 — Is the effect ESG-specific?
+
+![ESG-Leaders adds (left) vs. S&P 500 adds (right), same matched estimator. Note
+the difference in vertical scale: the ESG breadth response tops out near +33
+filers, the S&P 500 response near +290.](figures/esg_vs_placebo.png)
+
+This is the primary test. The windowed breadth response is **ESG +27.6 vs. S&P
+500 +149.0 filers**, so the ESG-specific contrast is
+
+$$\widehat{\text{ESG-specific}} = 27.6 - 149.0 = -121.5 \text{ filers} \quad (\text{se } 37.3,\ p = 0.001).$$
+
+The contrast is large, statistically significant, and **negative**: ESG-Leaders
+inclusion attracts *less* institutional breadth than a generic S&P 500 addition,
+not more. On depth the contrast is −0.40 log points (se 0.449, p = 0.373) — again
+non-positive. **H2 is not supported** on either outcome.
+
+The qualitative ordering (ESG response ≤ generic response) is robust across all
+three estimators and both control pools (Table 1): full-pool CS (ESG +79.7 vs.
+S&P +203.3), matched CS (+31.2 vs. +172.7), and matched SA (+27.6 vs. +149.0) all
+agree. Both arms exhibit failing pre-trends, so the *levels* are interpreted
+cautiously; but no specification produces the positive ESG-minus-generic premium
+that H2 predicts. The most defensible reading is that the apparent "ESG flow
+effect" is a fraction of the ordinary index-inclusion effect — the label does not
+add allocative weight beyond index mechanics.
+
+## 5.3 H3 — Legitimacy decay after 2022
+
+![Windowed post-ATT for ESG cohorts included before vs. on/after 2022Q1, breadth
+and depth. Point estimates with 95% CIs.](figures/decay.png)
+
+Splitting ESG cohorts at 2022Q1 yields a late-minus-early difference of **−12.1
+filers** on breadth (se 18.1, p = 0.504) and **−0.13 log points** on depth (se
+0.16, p = 0.421). Both are signed in the predicted (declining) direction, but
+neither is statistically significant. With only ~3 post-2022 quarters of 13F data
+available, this split is underpowered by construction (a limitation that was
+pre-registered). **H3 is not supported**, with the direction noted.
+
+## 5.4 H4 — Heterogeneity (not estimable)
+
+H4 requires bucketing the institutional response by filer type (passive vs.
+active; ESG-badged vs. not), which needs per-filer (per-CIK) holdings. The
+assembled 13F outcome was cached as CUSIP × quarter aggregates, so the per-filer
+manager identity is unavailable. The *classification methodology* — name-pattern
+heuristics for passive index complexes and ESG/SRI/sustainable filers — is
+implemented (`src/estimate/heterogeneity.py`), but the estimation
+is blocked on data, not code, and would require re-ingesting the raw 13F
+`INFOTABLE` keyed by CIK. This is reported as a data limitation
+(`results/H4_NOT_ESTIMABLE.txt`), not a result.
+
+## 5.5 Summary
+
+**Table 1.** Windowed post-ATT (e = 0…+4) by outcome and arm. `cs_post_*` =
+Callaway–Sant'Anna; `sa_post_matched` = Sun–Abraham (matched). Callaway–Sant'Anna
+does not itself return a pre-trend statistic, so the pre-trend columns report the
+companion joint Wald test on pre-period event-time coefficients (q ∈ {−4,−3,−2}):
+**Full pre-trend** is the two-way fixed-effects event study on the full
+clean-control pool; **Matched pre-trend** is the Sun–Abraham event study on the
+matched pool. "PASS" = p ≥ 0.05. Source: `results/summary.csv`.
+
+| Outcome | Arm | Full CS | Full pre-trend | Matched CS | Matched SA (se) | Matched pre-trend |
+|---|---|---:|:--:|---:|---:|:--:|
+| n_filers | ESG | +79.66 | FAIL (p≈0) | +31.23 | +27.56 (9.37) | FAIL (p=0.001) |
+| n_filers | S&P 500 | +203.29 | FAIL | +172.73 | +149.02 (36.06) | FAIL (p≈0) |
+| log_shares | ESG | −0.424 | FAIL (p=0.006) | −0.011 | −0.004 (0.085) | FAIL (p=0.027) |
+| log_shares | S&P 500 | +0.447 | FAIL | +0.580 | +0.396 (0.441) | FAIL |
+| log_value | ESG | −0.560 | FAIL (p=0.040) | −0.098 | −0.082 (0.095) | **PASS (p=0.488)** |
+| log_value | S&P 500 | +0.397 | FAIL | +0.632 | +0.383 (0.557) | FAIL |
+
+| Hypothesis | Estimate | p | Verdict |
+|---|---|---:|---|
+| H2 ESG-specific, breadth | −121.47 filers (se 37.25) | 0.001 | Not supported |
+| H2 ESG-specific, depth | −0.40 log pts (se 0.449) | 0.373 | Not supported |
+| H3 decay, breadth | −12.08 filers (se 18.09) | 0.504 | Not supported (right sign) |
+| H3 decay, depth | −0.13 log pts (se 0.16) | 0.421 | Not supported (right sign) |
+| H4 heterogeneity | — | — | Not estimable (data) |
+
+# 6. Discussion: the normative stakes
+
+The result is a null, and the null is the point. Three regulatory regimes — SFDR,
+SDR, and the SEC's climate-disclosure rule — are built on the premise that ESG
+designations function as authoritative signals that *lead* capital toward
+better-rated firms. That premise has an empirical content: ESG inclusion should
+move investment *beyond* what ordinary index membership would move. On the
+institutional-flow evidence assembled here, it does not. Once the index mechanism
+is differenced out via the S&P 500 placebo, the ESG-specific component of the
+flow response is not positive — it is, if anything, negative, and on depth it is
+zero.
+
+Two readings are consistent with this. The benign reading is that institutional
+investors already price the fundamentals that ESG ratings summarise, so the label
+adds no incremental information and therefore no incremental flow — a market that
+has internalised ESG rather than one that ignores it. The critical reading,
+closer to the "aggregate confusion" literature on ESG-rating divergence (Berg,
+Koelbel and Rigobon 2022) and to evidence that investors do not straightforwardly
+value sustainability claims (Hartzmark and Sussman 2019; Pástor, Stambaugh and
+Taylor 2021), is that the label is not carrying the allocative signal the
+regulatory architecture assumes. Either way, a disclosure regime justified on the
+ground that ESG ratings *steer* institutional capital should be able to point to
+the steering. This design does not find it.
+
+This is a business-ethics finding as much as a finance one: the legitimacy of
+quasi-authoritative ESG signals is, in part, an empirical claim about their
+effect on capital, and that claim is testable. The honest answer here is that the
+institutional-flow data do not corroborate it — with the strong caveat that
+parallel trends fail, which limits what can be said about magnitudes even as it
+leaves the ESG-vs-generic *ordering* intact.
+
+# 7. Limitations
+
+The limitations are substantive and pre-committed.
+
+1. **Pre-trends fail.** The binding constraint. Treated firms are on an
+   index-eligibility growth path, so even matched controls do not deliver clean
+   parallel trends on breadth or depth. All level estimates carry this caveat;
+   the cross-arm *ordering* is more robust than any single level.
+2. **Institutional, not retail, flows.** 13F covers institutions over the $100m
+   reporting threshold. Retail flows (the original framing) are not observed —
+   no WRDS/Vanda access — and no retail claim is made.
+3. **Quarterly, coarse event timing.** 13F is quarterly, so event time is in
+   quarters and short-window dynamics are invisible.
+4. **ETF/N-PORT proxy for index membership.** Inclusion is reconstructed from
+   iShares ESG-ETF holdings, not the MSCI index list, and treatment is a CUSIP
+   diff, so corporate-action CUSIP churn can masquerade as inclusion (exact-name
+   cases are auto-flagged; changed-name cases reconciled in the panel build).
+5. **Modest placebo sample.** The clean-generic placebo is 65 firms; real but
+   small.
+6. **Matching covariates.** Size and pre-ownership only; sector (GICS) and a
+   price-based liquidity measure are not in the CUSIP-keyed panel.
+7. **ESG-arm price CAR not estimable**; the CAR is a placebo-arm benchmark only.
+8. **The pre-registered robustness battery is partially run.** The cross-estimator
+   and full-vs-matched-pool comparisons are reported; alternative windows (±3,
+   ±6), winsorised change outcomes, COVID-quarter exclusion, the PSM-matched pool,
+   and the drop-`ever_dropped` treatment-definition robustness are specified in
+   `PREREGISTRATION.md` but not yet executed, and are the natural next step.
+
+# 8. Conclusion
+
+Using a pre-registered, placebo-identified staggered-DiD design on SEC
+institutional-holdings data, I find no evidence that ESG-index inclusion draws
+institutional capital beyond the mechanical index-inclusion effect. ESG-Leaders
+inclusion is associated with a rise in ownership breadth, but a generic S&P 500
+addition is associated with a much larger one, so the ESG-specific contrast is
+significantly negative; ownership depth shows no ESG effect; and the post-2022
+"legitimacy decay" is directionally present but underpowered. The mandatory
+pre-trends test fails for the ESG arm, so the estimates are reported with that
+limitation foregrounded rather than presented as clean causal magnitudes — but
+the central ordering, ESG response ≤ generic response, holds across every
+estimator and control pool. For regulatory regimes premised on ESG ratings
+*leading* capital, the institutional-flow evidence assembled here is, at best, not
+supportive — and the methodological transparency about why is itself the
+contribution.
+
+# References
+
+- Berg, F., Koelbel, J. F., and Rigobon, R. (2022). Aggregate Confusion: The
+  Divergence of ESG Ratings. *Review of Finance* 26(6), 1315–1344.
+- Callaway, B., and Sant'Anna, P. H. C. (2021). Difference-in-Differences with
+  Multiple Time Periods. *Journal of Econometrics* 225(2), 200–230.
+- Chang, Y.-C., Hong, H., and Liskovich, I. (2015). Regression Discontinuity and
+  the Price Effects of Stock Market Indexing. *Review of Financial Studies* 28(1),
+  212–246.
+- Goodman-Bacon, A. (2021). Difference-in-Differences with Variation in Treatment
+  Timing. *Journal of Econometrics* 225(2), 254–277.
+- Harris, L., and Gurel, E. (1986). Price and Volume Effects Associated with
+  Changes in the S&P 500 List: New Evidence for the Existence of Price Pressures.
+  *Journal of Finance* 41(4), 815–829.
+- Hartzmark, S. M., and Sussman, A. B. (2019). Do Investors Value Sustainability?
+  A Natural Experiment Examining Ranking and Fund Flows. *Journal of Finance*
+  74(6), 2789–2837.
+- Iacus, S. M., King, G., and Porro, G. (2012). Causal Inference without Balance
+  Checking: Coarsened Exact Matching. *Political Analysis* 20(1), 1–24.
+- Pástor, Ľ., Stambaugh, R. F., and Taylor, L. A. (2021). Sustainable Investing in
+  Equilibrium. *Journal of Financial Economics* 142(2), 550–571.
+- Rosenbaum, P. R., and Rubin, D. B. (1983). The Central Role of the Propensity
+  Score in Observational Studies for Causal Effects. *Biometrika* 70(1), 41–55.
+- Shleifer, A. (1986). Do Demand Curves for Stocks Slope Down? *Journal of
+  Finance* 41(3), 579–590.
+- Sun, L., and Abraham, S. (2021). Estimating Dynamic Treatment Effects in Event
+  Studies with Heterogeneous Treatment Effects. *Journal of Econometrics* 225(2),
+  175–199.
+- Wurgler, J., and Zhuravskaya, E. (2002). Does Arbitrage Flatten Demand Curves
+  for Stocks? *Journal of Business* 75(4), 583–608.
+
+---
+
+*Reproducibility.* All estimates are produced by `make estimate` and all figures
+and tables by `make figures`, from `src/estimate/did.py` and `src/viz/figures.py`
+respectively. Hypotheses and design were frozen in `PREREGISTRATION.md` before
+estimation; data provenance is in `data/DATA_LINEAGE.md`. Findings are reported
+honestly regardless of whether they support the initial hypothesis.

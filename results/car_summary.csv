@@ -1,0 +1,2 @@
+arm,window,n_event_days,n,mean_car,t_stat,pct_positive,total_events,status_ok,status_insufficient_pre,status_no_prices,status_event_window_oob,status_event_after_data
+sp500_placebo,"[-5,+5]",11,99,0.013513,1.5529,0.5354,124,99,20,3,1,1
