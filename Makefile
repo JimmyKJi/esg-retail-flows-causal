@@ -11,7 +11,7 @@ PY     := ./venv/bin/python
 PYTEST := ./venv/bin/pytest
 
 .DEFAULT_GOAL := help
-.PHONY: help data data-sec panel matched car estimate placebo figures test clean
+.PHONY: help data data-sec panel matched car estimate placebo robustness figures test clean
 
 help:  ## Show this help
 	@echo "ESG flows — pipeline targets:"
@@ -57,9 +57,14 @@ estimate:  ## Phase 3 — event study + heterogeneity-robust staggered DiD (need
 	  || { echo "Missing matched controls — run 'make matched' first."; exit 1; }
 	$(PY) -m src.estimate.did
 
-placebo:  ## Phase 4 — ESG vs S&P 500 placebo contrast (H2; produced by 'make estimate')
+placebo:  ## ESG vs S&P 500 placebo contrast (H2; produced by 'make estimate')
 	@echo ">> H2 placebo contrast is produced by 'make estimate' -> results/h2_esg_specific.csv"
 	@test -f results/h2_esg_specific.csv || { echo "Not found — run 'make estimate' first."; exit 1; }
+
+robustness:  ## Phase 4 — pre-registered robustness battery (needs panel + matched)
+	@test -f data/processed/panel.parquet -a -f data/processed/matched_esg_cem.parquet \
+	  || { echo "Missing panel/matched controls — run 'make panel matched' first."; exit 1; }
+	$(PY) -m src.estimate.robustness
 
 figures:  ## Build paper figures + tables from estimation output (needs estimate)
 	@test -f results/event_studies.parquet \

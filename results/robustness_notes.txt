@@ -1,0 +1,3 @@
+Pre-registered robustness variants NOT estimable on the assembled data (recorded, not faked):
+  * Sun-Abraham on the full clean-control pool — the saturated cohort x event design is a dense ~1.4 GB matrix on ~95k controls; the full-pool effect is reported via Callaway-Sant'Anna point estimates instead (see robustness.csv rows with estimator=callaway_santanna, and cs_post_full in summary.csv).
+  * Treatment definition (b) 'restrict the post window to before the first exit' — the panel carries ever_dropped but not a per-firm first-exit quarter, so the censored-post variant cannot be built without re-deriving exit timing from the N-PORT membership diffs.

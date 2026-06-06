@@ -2,6 +2,49 @@
 
 Running log, newest first. One entry per working session.
 
+## 2026-06-06 (cont. 3) — PHASE 4: PRE-REGISTERED ROBUSTNESS BATTERY
+
+**The headline null survives the full pre-registered robustness battery. The H2
+ESG-specific breadth contrast (ATT_ESG − ATT_S&P) is negative in all 8
+specifications and significant in all 7 that carry inference (−61 to −137 filers);
+depth is negative in all 8 and significant in none. The sign never flips across
+matching scheme, averaging horizon, outlier treatment, COVID exclusion, or
+treatment definition. 47 tests green (+7 this session).**
+
+**1. New module — `src/estimate/robustness.py`.** Reuses the frozen `did.py`
+estimators (no edits to the Phase-3 module). For each primary outcome it sweeps:
+baseline (CEM, post 0..4); alt horizons 0..2 / 0..6 (recomputed from the same SA
+fit's delta-method covariance via `_window_att`); PSM-matched controls; winsorise
+the level outcome 1/99; exclude COVID 2020Q1–Q2 (q_idx 8081/8082); drop the 177
+`ever_dropped` ESG firms; and the full clean-control pool via Callaway-Sant'Anna
+point estimate (SA infeasible on ~95k controls). Writes `results/robustness.csv`
+(16 rows) + `results/robustness_notes.txt`.
+
+**2. Sanity-pinned to the frozen results.** The baseline row reproduces
+`h2_esg_specific.csv` exactly (n_filers −121.468; log_shares −0.400), and a unit
+test asserts `_window_att(res, POST_WINDOW)` equals the estimator's own
+`post_att`/`post_se` — so the recompute can't silently drift.
+
+**3. Two variants honestly recorded as NOT estimable** (not faked): SA on the full
+pool (dense saturated design → CS point estimate), and treatment-definition (b)
+"restrict post to before first exit" (panel has `ever_dropped` but no per-firm exit
+quarter). Both in `results/robustness_notes.txt`.
+
+**4. Paper updated.** Added §5.6 Robustness + Table 2; converted limitation #8 from
+"battery partially run / next step" into "complete except two recorded exceptions";
+strengthened the conclusion to cite the battery. Also fixed the stale econ-stack
+README note (the pyfixest/differences stack runs in this venv).
+
+**5. Nuance worth noting.** Winsorising at 1/99 roughly halves *both* arms' breadth
+effects (ESG +27.6→+12.2, S&P +149→+73.4) — so the largest firms carry much of the
+generic-add breadth — but the ESG-specific contrast stays significantly negative
+(−61.3, p=0.015). The ordering ESG ≤ generic is not an outlier artefact.
+
+### Next
+- Admissions polish: README results section with the headline figure inline + a
+  plain-language summary up top.
+- H4 only becomes estimable by re-ingesting raw 13F INFOTABLE keyed by CIK.
+
 ## 2026-06-06 (cont. 2) — RESEARCH NOTE WRITTEN + FULL ACCURACY AUDIT
 
 **The paper is drafted (`paper/paper.md`) and the whole repo has been swept for

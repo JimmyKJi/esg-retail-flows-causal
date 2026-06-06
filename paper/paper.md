@@ -325,6 +325,45 @@ matched pool. "PASS" = p ≥ 0.05. Source: `results/summary.csv`.
 | H3 decay, depth | −0.13 log pts (se 0.16) | 0.421 | Not supported (right sign) |
 | H4 heterogeneity | — | — | Not estimable (data) |
 
+## 5.6 Robustness
+
+The pre-registered robustness battery (`src/estimate/robustness.py`,
+`results/robustness.csv`) re-estimates the H2 ESG-specific contrast under each
+perturbation named in the pre-registration, varying one dimension at a time and
+holding the rest at the credible baseline (CEM-matched controls, post horizon
+0…+4). The headline is unchanged: the ESG-specific **breadth** effect is *negative
+in all eight specifications and significant in all seven that carry inference*
+(the full-pool row is a Callaway–Sant'Anna point estimate without an aggregated
+SE), ranging from −61 to −137 filers; the **depth** effect is negative in all eight
+and significant in none. The sign never flips. Winsorising the level outcome at
+1/99 roughly halves *both* arms' breadth effects — so part of the generic-add
+effect is carried by the largest firms — yet the ESG-specific contrast stays
+significantly negative (−61.3, p = 0.015).
+
+**Table 2.** H2 ESG-specific contrast (ATT_ESG − ATT_S&P) across the robustness
+battery. Breadth = `n_filers`, depth = `log_shares`; Sun–Abraham windowed post-ATT
+unless noted. Source: `results/robustness.csv`.
+
+| Specification | Breadth: ESG-specific (se) | p | Depth: ESG-specific | p |
+|---|---:|---:|---:|---:|
+| Baseline (CEM, post 0–4) | −121.5 (37.3) | 0.001 | −0.40 | 0.373 |
+| Horizon 0–2 | −109.9 (35.9) | 0.002 | −0.44 | 0.336 |
+| Horizon 0–6 | −136.6 (38.8) | <0.001 | −0.51 | 0.262 |
+| PSM-matched controls | −111.8 (37.2) | 0.003 | −0.37 | 0.405 |
+| Winsorise outcome 1/99 | −61.3 (25.3) | 0.015 | −0.38 | 0.391 |
+| Exclude COVID 2020Q1–Q2 | −116.7 (36.1) | 0.001 | −0.31 | 0.334 |
+| Drop ever-dropped (ESG) | −100.8 (38.5) | 0.009 | −0.23 | 0.607 |
+| Full pool (CS point est.) | −123.6 (—) | — | −0.87 | — |
+
+Across matching scheme, averaging horizon, outlier treatment, crisis-period
+exclusion, and treatment definition, ESG-Leaders inclusion never draws *more*
+institutional breadth or depth than a generic S&P 500 addition. Two pre-registered
+variants are not estimable on the assembled data and are recorded rather than
+approximated (`results/robustness_notes.txt`): Sun–Abraham on the full ~95k-control
+pool (a dense saturated design — reported via the Callaway–Sant'Anna point estimate
+above) and the "restrict the post window to before first exit" treatment definition
+(the panel persists `ever_dropped` but not a per-firm exit quarter).
+
 # 6. Discussion: the normative stakes
 
 The result is a null, and the null is the point. Three regulatory regimes — SFDR,
@@ -378,11 +417,15 @@ The limitations are substantive and pre-committed.
 6. **Matching covariates.** Size and pre-ownership only; sector (GICS) and a
    price-based liquidity measure are not in the CUSIP-keyed panel.
 7. **ESG-arm price CAR not estimable**; the CAR is a placebo-arm benchmark only.
-8. **The pre-registered robustness battery is partially run.** The cross-estimator
-   and full-vs-matched-pool comparisons are reported; alternative windows (±3,
-   ±6), winsorised change outcomes, COVID-quarter exclusion, the PSM-matched pool,
-   and the drop-`ever_dropped` treatment-definition robustness are specified in
-   `PREREGISTRATION.md` but not yet executed, and are the natural next step.
+8. **Two robustness variants remain not estimable.** The pre-registered battery is
+   otherwise complete (§5.6): alternative matching (CEM/PSM/full), averaging
+   horizons, 1/99 winsorising, COVID-quarter exclusion, and the drop-`ever_dropped`
+   treatment definition all run, and the ESG-specific ordering is robust across all
+   of them. The two exceptions are recorded rather than approximated: Sun–Abraham on
+   the full ~95k-control pool (a dense saturated design — reported via the
+   Callaway–Sant'Anna point estimate) and the "restrict the post window to before
+   first exit" treatment definition (the panel persists `ever_dropped` but not a
+   per-firm exit quarter).
 
 # 8. Conclusion
 
@@ -396,7 +439,9 @@ significantly negative; ownership depth shows no ESG effect; and the post-2022
 pre-trends test fails for the ESG arm, so the estimates are reported with that
 limitation foregrounded rather than presented as clean causal magnitudes — but
 the central ordering, ESG response ≤ generic response, holds across every
-estimator and control pool. For regulatory regimes premised on ESG ratings
+estimator, control pool, and perturbation in the pre-registered robustness battery
+(§5.6) — negative in all eight specifications, significant in all seven that carry
+inference on breadth. For regulatory regimes premised on ESG ratings
 *leading* capital, the institutional-flow evidence assembled here is, at best, not
 supportive — and the methodological transparency about why is itself the
 contribution.

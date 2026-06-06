@@ -129,6 +129,17 @@ the robust source. This is the locked Phase 1 decision.
 | Caveat | **H4 (filer-type heterogeneity) is not estimable** from the cached cusip×quarter aggregates (no per-filer CIK); the classification methodology is coded (`src/estimate/heterogeneity.py`) but the per-filer holdings re-ingestion is missing. All causal claims are gated on the pre-trends test per the frozen decision rule — reported honestly when it fails. |
 | License | Derived from the inputs above (US-Government-work + CC-BY-SA + research-use). |
 
+## Estimation output — Phase 4 robustness battery  ✅ built (Phase 4)
+
+| field | value |
+|---|---|
+| What | The pre-registered robustness sweep: re-estimates the **H2 ESG-specific contrast** (ATT_ESG − ATT_S&P) under each perturbation named in `PREREGISTRATION.md`, varying one dimension at a time off the credible baseline (CEM controls, post horizon 0..+4). |
+| Source | Derived — `src/estimate/robustness.py` (reuses the frozen `did.py` estimators; the baseline row reproduces `h2_esg_specific.csv` exactly). Unit-tested (`tests/test_robustness.py`, incl. a check that the windowed-ATT recompute matches the estimator's own number). |
+| Method | Eight specifications per primary outcome: baseline; alt. averaging horizons (0..+2 / 0..+6, recomputed from the same fit's covariance); PSM-matched controls; winsorise the level outcome 1/99; exclude COVID quarters (2020Q1–Q2 = q_idx 8081/8082); drop the 177 `ever_dropped` ESG firms; and the full clean-control pool via Callaway-Sant'Anna point estimate (Sun-Abraham is infeasible on ~95k controls). |
+| Output | `results/robustness.csv` (16 rows = 8 specs × 2 outcomes) + `results/robustness_notes.txt`. **Committed.** Headline: the ESG-specific **breadth** effect is negative in all 8 specs and significant in all 7 carrying inference (−61 to −137 filers); **depth** negative in all 8, significant in none. The sign never flips. |
+| Caveat | Two pre-registered variants are **not estimable** and recorded (not faked): Sun-Abraham on the full pool (dense ~1.4 GB saturated design → CS point estimate instead), and treatment-definition (b) "restrict post window to before first exit" (panel carries `ever_dropped` but no per-firm exit quarter). Winsorising is applied to the *level* outcome the headline uses, a stated deviation from the pre-registration's "change outcomes". |
+| License | Derived from the inputs above (US-Government-work + CC-BY-SA + research-use). |
+
 ---
 
 ## SEC EDGAR access note (resolved)
