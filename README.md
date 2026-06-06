@@ -14,13 +14,38 @@ mandatory pre-trends test fails for the ESG arm — so even the level estimate i
 reported with that caveat, not as clean causal evidence. The full writeup is in
 [`paper/paper.md`](paper/paper.md).
 
-**Status:** Phase 3 complete (data → panel → matched controls + placebo → estimation
-→ writeup). All sources ingested (Fama-French, S&P 500 changes, prices; SEC N-PORT
-treatment + 13F outcome); panel, matched samples, and placebo arm built; the
-heterogeneity-robust staggered-DiD battery estimated (`results/`), figures/tables
-rendered (`paper/`), and the paper drafted. SEC access resolved — see
-[SEC access note](#sec-access). Hypotheses frozen in `PREREGISTRATION.md` before
-estimation; per-input provenance in `data/DATA_LINEAGE.md`.
+![ESG-Leaders adds vs. matched S&P 500 placebo adds — institutional-breadth event study](paper/figures/esg_vs_placebo.png)
+
+*Breadth (number of 13F filers) around index inclusion; event time in quarters,
+shaded band = pre-period parallel-trends test. **Left:** ESG-Leaders adds draw
+≈ +28 filers. **Right:** matched generic S&P 500 adds draw ≈ +149. Differencing
+the two isolates the ESG-specific effect: **−121.5 filers (se 37.3, p = 0.001)**
+— ESG inclusion draws **less** institutional breadth than an ordinary index add,
+not more.*
+
+### Results at a glance
+
+| Hypothesis | Prediction | Headline estimate (breadth, 13F filers) | Verdict |
+|:--|:--|:--|:--|
+| **H1** — index inclusion moves flows | positive | ESG **+27.6** (se 9.4); S&P placebo **+149.0** (se 36.1) | Mechanical effect present; ESG pre-trend fails |
+| **H2** — ESG-*specific* premium | ESG > generic | ESG − generic = **−121.5** (se 37.3), **p = 0.001** | **Not supported — wrong sign** |
+| **H3** — legitimacy decay post-2022 | late < early | early +33.5, late +21.4; Δ = **−12.1** (se 18.1), p = 0.50 | Not supported (underpowered late cohort) |
+| **H4** — heterogeneity by filer type | concentrated | not estimable — cached 13F has no per-filer CIK (§5.4) | — |
+| **Robustness** — 8 pre-registered specs | — | ESG-specific < 0 in **8 / 8**; significant in **7 / 7** that carry inference (−61 to −137 filers) | Null is robust |
+
+*Estimator: heterogeneity-robust Sun-Abraham event study on CEM-matched controls,
+windowed post-ATT over event quarters 0–4. Depth (`log_shares`) is negative in
+every spec and significant in none. Full numbers in [`results/`](results/) and
+[`paper/paper.md`](paper/paper.md).*
+
+**Status:** Phase 4 complete (data → panel → matched controls + placebo →
+estimation → pre-registered robustness battery → writeup). All sources ingested
+(Fama-French, S&P 500 changes, prices; SEC N-PORT treatment + 13F outcome); panel,
+matched samples, and placebo arm built; the heterogeneity-robust staggered-DiD
+battery estimated and stress-tested across 8 specifications (`results/`),
+figures/tables rendered (`paper/`), and the paper drafted. SEC access resolved —
+see [SEC access note](#sec-access). Hypotheses frozen in `PREREGISTRATION.md`
+before estimation; per-input provenance in `data/DATA_LINEAGE.md`.
 
 ---
 
@@ -60,17 +85,20 @@ estimation; per-input provenance in `data/DATA_LINEAGE.md`.
 ## Data
 See `data/DATA_LINEAGE.md` for source, URL, date, license, and status of every
 input. Reachable & ingested: Fama-French factors, S&P 500 change events, prices.
-SEC-hosted: N-PORT holdings (treatment) ✅ pulled; 13F holdings (outcome) — next.
+SEC-hosted: N-PORT holdings (treatment) ✅ and 13F holdings (outcome) ✅ both
+pulled. All raw/interim/processed data is gitignored and rebuilds from source.
 
 ## Repository
 ```
 src/ingest/    ff_factors, sp500_events, prices  (reachable);
                edgar_13f, nport_holdings, edgar_session  (SEC, run unblocked)
-src/build/     panel, matching                   (Phase 2)
-src/estimate/  event_study, did, placebo, structural_break, heterogeneity (Phase 3-5)
+src/build/     panel, matching, crosswalk, car, placebo   (Phase 2-2b)
+src/estimate/  did (CS + Sun-Abraham), robustness, event_study, heterogeneity,
+               placebo, structural_break                  (Phase 3-4)
 src/viz/       figures
-tests/         smoke (reachable data) + SEC transform unit tests
+tests/         smoke (reachable data) + SEC-transform + estimator/robustness units
 data/          raw/ interim/ processed/ (gitignored) + DATA_LINEAGE.md
+results/        *.csv / *.parquet estimates (committed) + run logs (gitignored)
 paper/         writeup + figures/ tables/
 ```
 
@@ -79,11 +107,11 @@ paper/         writeup + figures/ tables/
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt        # ingestion stack; see note on the econ stack
 make data            # Fama-French, S&P 500, prices  (works anywhere)
-make test            # 6 tests: reachable-data smoke + SEC-transform units
+make test            # 47 tests: reachable-data smoke + SEC-transform + estimator units
 # --- the following require an unblocked network (see SEC access note) ---
 echo "SEC_EDGAR_UA=Your Name you@email.com" > .env
 make data-sec        # 13F + N-PORT
-make panel estimate placebo figures
+make panel matched estimate robustness figures
 ```
 > **Econometrics stack note.** `pyfixest`/`differences`/`polars`/`numba` are
 > pinned in `requirements.txt` and run in this venv — estimation and the full
