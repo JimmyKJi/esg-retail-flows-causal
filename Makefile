@@ -35,9 +35,10 @@ data-sec:  ## Pull SEC sources: 13F outcome + N-PORT treatment (REQUIRES an unbl
 # These recipes stop the build with a clear pointer rather than failing deep in
 # Python with a missing-argument error.
 
-panel:  ## Phase 2 — build the firm x quarter panel (blocked on data-sec)
-	@echo "Phase 2 (panel) is blocked: run 'make data-sec' from an unblocked network first."
-	@echo "See README's SEC access note and PROGRESS.md."; exit 1
+panel:  ## Phase 2 — build the firm x quarter analysis panel (needs interim 13F + N-PORT)
+	@test -f data/interim/holdings_13f.parquet -a -f data/interim/esg_inclusion_events.parquet \
+	  || { echo "Missing interim 13F/N-PORT parquets — run 'make data-sec' from an unblocked network first."; exit 1; }
+	$(PY) -m src.build.panel
 
 estimate:  ## Phase 3 — event study + heterogeneity-robust staggered DiD (needs panel)
 	@echo "Phase 3 (estimate) needs data/processed/panel.parquet (make panel) and the conda econ stack."

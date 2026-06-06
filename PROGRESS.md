@@ -2,6 +2,53 @@
 
 Running log, newest first. One entry per working session.
 
+## 2026-06-06 (cont.) — FIRM×QUARTER PANEL ASSEMBLED (task #8 / Phase 2 done)
+
+**`src/build/panel.py` implemented — the analysis dataset now exists.**
+- `build_panel()` joins the three interim tables (13F outcome + N-PORT treatment
+  + ESG membership) into `data/processed/panel.parquet`: **904,589 rows, 95,572
+  CUSIPs, 29 quarters (2019Q1→2026Q1)**. `make panel` now runs the build (was a
+  hard-gated stub); **13 tests green** (added 7 in `tests/test_panel.py` covering
+  cohort timing, quarter alignment, the unit normalisation, junk-drop, the gap
+  rule, sample roles and reversal).
+- **Quarter alignment works as designed:** both the N-PORT fiscal quarter-ends
+  (Feb/May/Aug/Nov) and the 13F calendar quarter-ends fold onto the **containing
+  calendar quarter** — a 2020-02-29 inclusion and the 2020-03-31 13F snapshot
+  both land in 2020Q1 and join cleanly. Cohort = first genuine inclusion quarter;
+  `event_time` in quarters; `post`/`esg_inclusion` absorbing from cohort.
+- **2023 VALUE unit change handled + empirically pinned.** Boundary confirmed at
+  report period **2022-12-31** (MSFT total_value 14.76B at 2022-09-30 → 1,086B at
+  2022-12-31; cross-firm median 1,407 → 407,346). `total_value` ×1000 for periods
+  ≤ 2022-09-30 → `total_value_usd`; `n_filers` and `total_shares` are unit-immune
+  and so are the **primary** outcomes (breadth + share depth).
+- **Junk dropped:** non-9-char and issuer-base-`000000` CUSIPs (the `N/A`
+  placeholder, `0000000NA`, etc.) — 457 rows / 408 ids out of the 13F panel.
+
+**Two identification calls made explicitly (not papered over).**
+- **Left-censored members are NOT controls.** The membership panel starts 2019Q4,
+  so the ~289 firms already in the index at the window start have no datable
+  inclusion. Those + corp-action-suspect adds are tagged **`esg_excluded`** and
+  held OUT of the never-treated pool. Final roles: **334 treated / 95,035 clean
+  controls / 203 esg_excluded.** 332/334 treated have both pre & post observed.
+- **Treatment is non-absorbing — a real finding.** **177/334 treated firms later
+  exit the index** (`ever_dropped` flag). Canonical Callaway-Sant'Anna assumes
+  absorbing treatment, so the headline will be an **event study around *first*
+  inclusion (ITT)**; long-horizon ATT is attenuated by exits. Documented for
+  Phase 3, not hidden.
+- **Caution, honestly logged:** raw treated-group breadth rises around inclusion
+  (event-time −3→0→+3: 806→873→922) **but with a pre-trend in the pre-period
+  itself** (−3→−1: 806→836). So the raw means are *not* the causal estimate — the
+  clean-control + S&P-500-placebo DiD and a pre-trends test are what isolate any
+  ESG-specific effect. The panel surfaces both the signal and the caveat.
+
+### Next
+1. `src/build/matching.py` — matched controls (size/sector/pre-ownership/liquidity)
+   → the estimation sample, symmetrically for ESG and the placebo.
+2. Persist S&P 500 placebo events (`sp500_events.py` has no `to_parquet` yet) and
+   build the placebo arm; FF-adjusted CAR needs the full price pull.
+3. Phase 3 estimation (`differences`/`pyfixest`) — needs the conda econ stack
+   (`conda install -c conda-forge pyfixest polars numba differences`).
+
 ## 2026-06-06 — 13F OUTCOME PANEL BUILT (task #7 done); all data sources in
 
 **13F institutional-ownership panel pulled end-to-end — the primary outcome.**

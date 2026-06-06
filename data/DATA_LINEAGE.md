@@ -5,7 +5,7 @@ under `data/raw/` (gitignored — never committed). Reproduce with `make data`
 (reachable sources) and `make data-sec` (SEC sources — run from a residential
 network with a real-email UA; see the access note).
 
-_Last updated: 2026-06-06 (Phase 1 — 13F outcome panel pulled; data sources complete)._
+_Last updated: 2026-06-06 (Phase 2 — firm×quarter analysis panel assembled from the interim tables)._
 
 ## Treatment — ESG-index inclusion events  **(LOCKED: SEC Form N-PORT-P)**
 
@@ -68,6 +68,17 @@ the robust source. This is the locked Phase 1 decision.
 | URL | (yfinance API) |
 | License | Yahoo terms — personal/research use |
 | Date pulled | 2026-06-05 — sample (AAPL/MSFT/NVDA, 2020-2024) verified; full pull keyed to the event sample |
+
+## Processed output — firm×quarter analysis panel  ✅ built (Phase 2)
+
+| field | value |
+|---|---|
+| What | The analysis dataset: one row per (CUSIP, calendar quarter) with the 13F outcomes, the ESG-inclusion treatment structure, and a sample role. |
+| Source | Derived — joins `holdings_13f.parquet` (outcome) + `esg_inclusion_events.parquet` (treatment) + `esg_index_holdings.parquet` (membership flags). Code: `src/build/panel.py`, unit-tested (`tests/test_panel.py`). |
+| Method | Both treatment as-of dates (N-PORT fiscal quarter-ends, Feb/May/Aug/Nov) and outcome dates (13F calendar quarter-ends) folded onto the **containing calendar quarter** so they join. Cohort = first genuine inclusion quarter (staggered-DiD timing); `event_time` in quarters; `post`/`esg_inclusion` absorbing from cohort. VALUE normalised ×1000 for periods ≤ 2022-09-30 (2023 unit change; `n_filers`/`total_shares` immune). Junk CUSIPs (non-9-char, issuer-base `000000`, the `N/A` placeholder) dropped. |
+| Output | `data/processed/panel.parquet` (gitignored) — **904,589 rows, 95,572 CUSIPs, 29 quarters (2019Q1→2026Q1)**. Roles: **334 treated**, 95,035 clean controls, **203 esg_excluded** (left-censored members + corp-action-suspect adds, kept OUT of the control pool). 332/334 treated CUSIPs have both pre- and post-inclusion quarters observed. |
+| Caveat | **Treatment is non-absorbing:** 177/334 treated firms later exit the index (`ever_dropped`) — canonical Callaway-Sant'Anna assumes absorbing treatment, so the headline is an event study around *first* inclusion (ITT); long-horizon ATT is attenuated by exits. The raw treated-group breadth shows a mild **pre-trend** (event-time −3→−1: 806→836), so the placebo (S&P 500) and clean-control DiD + a pre-trends test are what isolate any ESG-specific effect — not the raw means. Deferred (explicit): S&P 500 placebo arm (events not yet persisted), FF-adjusted CAR (needs full price pull), matched controls (`src/build/matching.py`). |
+| License | Derived from US-Government-work + CC-BY-SA inputs (see above). |
 
 ---
 
