@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import os
 import time
+from pathlib import Path
 
 import requests
 
@@ -151,6 +152,72 @@ def edgar_get(url: str, *, params: dict | None = None, timeout: int = 60,
         resp.raise_for_status()
         return resp
 
+    if isinstance(last_exc, EdgarBlocked):
+        raise last_exc
+    raise EdgarBlocked(_guidance(f"exhausted {max_retries} retries: {last_exc}"))
+
+
+def edgar_download(url: str, dest, *, params: dict | None = None,
+                   connect_timeout: int = 10, read_timeout: int = 120,
+                   max_retries: int = 4) -> Path:
+    """Stream a (possibly large) SEC file to ``dest`` with rate limiting, retry,
+    block detection on the first bytes, and an atomic finish.
+
+    Unlike :func:`edgar_get`, this never loads the whole body into memory or
+    decodes a binary body as text (edgar_get's block check calls ``resp.text``,
+    which would charset-sniff a 90 MB zip). It writes chunks straight to a
+    ``.part`` file and renames on success, so an interrupted download can't leave
+    a truncated file that later looks cached. A per-read timeout means a *stalled*
+    socket fails fast and retries instead of hanging indefinitely — the failure
+    mode that otherwise lets a hung download sit for days. Thread-safe enough for
+    a handful of concurrent downloads (the rate-limit clock is approximate).
+    """
+    global _last_request_ts
+    dest = Path(dest)
+    tmp = dest.with_suffix(dest.suffix + ".part")
+    headers = {
+        "User-Agent": USER_AGENT,
+        "Accept-Encoding": "gzip, deflate",
+        "Accept": "application/zip, application/octet-stream, */*",
+    }
+    last_exc: Exception | None = None
+    for attempt in range(max_retries):
+        wait = _MIN_INTERVAL - (time.monotonic() - _last_request_ts)
+        if wait > 0:
+            time.sleep(wait)
+        try:
+            with requests.get(url, params=params, headers=headers, stream=True,
+                              timeout=(connect_timeout, read_timeout)) as resp:
+                _last_request_ts = time.monotonic()
+                if resp.status_code == 403:
+                    raise EdgarBlocked(_guidance("HTTP 403"))
+                if resp.status_code in (429, 503):
+                    last_exc = EdgarBlocked(_guidance(f"HTTP {resp.status_code}"))
+                    time.sleep(2.0 * (attempt + 1))
+                    continue
+                resp.raise_for_status()
+                first = True
+                with open(tmp, "wb") as fh:
+                    for chunk in resp.iter_content(chunk_size=1 << 20):
+                        if not chunk:
+                            continue
+                        if first:
+                            if _BLOCK_MARKER.encode() in chunk[:2048]:
+                                raise EdgarBlocked(
+                                    _guidance("undeclared-automated-tool interstitial"))
+                            first = False
+                        fh.write(chunk)
+            tmp.replace(dest)
+            return dest
+        except EdgarBlocked:
+            tmp.unlink(missing_ok=True)
+            raise
+        except requests.RequestException as exc:  # transient: time out, reset, etc.
+            last_exc = exc
+            _last_request_ts = time.monotonic()
+            tmp.unlink(missing_ok=True)
+            time.sleep(1.5 * (attempt + 1))
+            continue
     if isinstance(last_exc, EdgarBlocked):
         raise last_exc
     raise EdgarBlocked(_guidance(f"exhausted {max_retries} retries: {last_exc}"))

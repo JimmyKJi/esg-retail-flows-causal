@@ -2,6 +2,56 @@
 
 Running log, newest first. One entry per working session.
 
+## 2026-06-06 — 13F OUTCOME PANEL BUILT (task #7 done); all data sources in
+
+**13F institutional-ownership panel pulled end-to-end — the primary outcome.**
+- `build_13f_panel()` now drives the full pipeline: `list_datasets()` discovers
+  **both** SEC bundle naming conventions (old `2019q1_form13f.zip` back to 2013Q2;
+  new receipt-window `01mar2024-31may2024_form13f.zip`), downloads in parallel,
+  parses, and aggregates per CUSIP×quarter. Persisted
+  `data/interim/holdings_13f.parquet`: **988,292 CUSIP×quarter rows, 29 quarters
+  (2019Q1→2026Q1), 97,660 distinct CUSIPs**, n_filers rising ~2,750→6,128 over the
+  window (more institutions filing over time — expected).
+- **Coverage check passes:** the 481 genuine ESG inclusions span 335 distinct
+  CUSIPs; **334/335 (99.7%) appear in the 13F panel** — the sole miss is an `N/A`
+  placeholder CUSIP in the treatment (Phase-2 drop). Treatment ↔ outcome join is
+  clean (all panel CUSIPs are 9-char).
+- **Identification nuance handled:** 13F bundles are keyed by *filing-receipt
+  window*, not report quarter — so each is filtered to its **modal
+  `PERIODOFREPORT`** and deduped to the **latest filing per CIK** (an amendment
+  supersedes its original, so `n_filers` counts distinct institutions, not
+  filings). Modal filtering drops ~3% late stragglers landing in an adjacent
+  window (minor n_filers undercount, documented). e.g. `2019q1_form13f.zip`
+  correctly reports quarter-end **2018-12-31**, not "2019Q1".
+- 6 tests still green (pure cores unchanged).
+
+**Two infra failures found and fixed (the pull had silently died overnight).**
+- **It wasn't slow — it was dead.** The first background run stopped after ~26h
+  of zero progress with no traceback: the Mac slept while unattended and
+  suspended/killed the job. Fix: run under **`caffeinate -ims`** so the machine
+  can't sleep mid-pull. Also the per-bundle download was crawling (~150 KB/s,
+  sequential, single-stream, power-nap-throttled).
+- **New streaming downloader** `edgar_session.edgar_download()`: streams to a
+  `.part` file with a per-read timeout (a stalled socket now fails fast + retries
+  instead of hanging for days), atomic rename on success (a cached file is always
+  complete), block-detection on the first chunk only (no charset-sniffing a 90 MB
+  zip via `resp.text`). `build_13f_panel()` downloads **5 bundles in parallel** →
+  **~24 MB/s** (~160× faster) and **checkpoints one parquet per bundle** under
+  `data/interim/_13f_parts/`, so any interruption resumes from disk.
+- **SEC zip-layout quirk:** most bundles store TSVs at the zip root, but
+  `01jun2025-31aug2025` nests them under a subfolder. `parse_dataset()` now
+  matches members by **basename** (handles both). This was the `KeyError:
+  'INFOTABLE.TSV'` that aborted the first complete run.
+
+### Next
+1. Task #8 / Phase 2 — firm×quarter panel: align N-PORT fiscal-quarter as-of dates
+   (Feb/May/Aug/Nov) to 13F calendar quarters (Mar/Jun/Sep/Dec); join treatment +
+   outcome + prices + FF + S&P 500 placebo; normalise the 13F $thousands→whole-$
+   unit change pre-2023; exclude `corp_action_suspect` events and the `N/A`-CUSIP
+   junk; reconcile changed-name corp actions.
+2. Commit `make data-sec` outputs' lineage; both SEC sources now land via one
+   `make data-sec` (run under `caffeinate`).
+
 ## 2026-06-05 (cont. 2) — SEC UNBLOCKED end-to-end; N-PORT treatment BUILT
 
 **SEC access fully resolved — two stacked filters, both fixed.**

@@ -5,7 +5,7 @@ under `data/raw/` (gitignored — never committed). Reproduce with `make data`
 (reachable sources) and `make data-sec` (SEC sources — run from a residential
 network with a real-email UA; see the access note).
 
-_Last updated: 2026-06-05 (Phase 1 — N-PORT treatment pulled)._
+_Last updated: 2026-06-06 (Phase 1 — 13F outcome panel pulled; data sources complete)._
 
 ## Treatment — ESG-index inclusion events  **(LOCKED: SEC Form N-PORT-P)**
 
@@ -32,11 +32,11 @@ the robust source. This is the locked Phase 1 decision.
 |---|---|
 | What | Δ aggregate institutional ownership and Δ count of 13F filers holding a security, around inclusion |
 | Source | SEC EDGAR **Form 13F structured data sets** (quarterly TSV bundles) |
-| URL | `https://www.sec.gov/files/structureddata/data/form-13f-data-sets/{YYYY}q{Q}_form13f.zip` (fallback stem `.../dera/data/...`) |
-| Method | Parse `INFOTABLE.tsv` + `SUBMISSION.tsv`; aggregate per CUSIP×quarter. Code: `src/ingest/edgar_13f.py`. **Unit-tested** (`tests/test_edgar_transforms.py`). |
-| Caveat | SEC changed `VALUE` from $thousands to whole $ on/after 2023-01 — normalise by `FILING_DATE`. 13F is quarterly → event time is in **quarters**. |
+| URL | Landing page `https://www.sec.gov/data-research/sec-markets-data/form-13f-data-sets`, scraped for bundle zips under `https://www.sec.gov/files/structureddata/data/form-13f-data-sets/`. Two naming conventions: `YYYYqQ_form13f.zip` (older, back to 2013Q2) and `DDmonYYYY-DDmonYYYY_form13f.zip` (newer, filing-receipt window). |
+| Method | `list_datasets()` discovers both conventions; bundles download in parallel (streaming, atomic `.part`, resumable). Per bundle: parse `INFOTABLE.tsv`+`SUBMISSION.tsv`, take the **modal `PERIODOFREPORT`** (bundles are keyed by receipt window, not report quarter, so each mixes a little adjacent-quarter straggler/amendment noise), dedup to the **latest filing per CIK** (amendment supersedes original → `n_filers` = distinct institutions, not filings), roll up per CUSIP. Per-bundle checkpoints in `data/interim/_13f_parts/`. Code: `src/ingest/edgar_13f.py`. **Unit-tested** (`tests/test_edgar_transforms.py`). |
+| Caveat | `VALUE` units changed $thousands→whole-$ on/after 2023-01 — normalise by period in Phase 2. 13F is quarterly → event time is in **quarters**. Modal-period filtering drops the ~3% late filings that land in an adjacent receipt window (slight `n_filers` undercount). Zip layout varies (some bundles nest the TSVs in a subfolder) — matched by basename. Run under `caffeinate` so the machine can't sleep mid-pull. |
 | License | US Government work — public domain |
-| Date pulled | **Not yet pulled** — next step; runs via `make data-sec` (access resolved, see note) |
+| Date pulled | **2026-06-06** — 32 quarterly bundles pulled (~24 MB/s, 5 parallel workers); after trimming pre-`since` periods: **988,292 CUSIP×quarter rows, 29 quarters (2019Q1→2026Q1), 97,660 distinct CUSIPs**. CUSIP coverage of the 481 genuine inclusion events = **334/335 (99.7%)**; the sole miss is an `N/A` placeholder CUSIP in the treatment (drop in Phase 2). Persisted `data/interim/holdings_13f.parquet`. |
 
 ## Placebo sample — generic (non-ESG) index inclusions  ✅ pulled
 
