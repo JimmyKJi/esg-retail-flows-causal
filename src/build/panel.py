@@ -1,4 +1,4 @@
-"""Build the firm × quarter analysis panel (Phase 2).
+"""Build the firm × quarter analysis panel (Phase 2 + 2b).
 
 Combines the ingested pieces into one tidy panel keyed on (cusip, quarter).
 Both the treatment (N-PORT ESG-index inclusions, dated at the fund's *fiscal*
@@ -11,6 +11,9 @@ calendar quarter** so they join cleanly: a 2020-02-29 inclusion and the
                              Leaders index (staggered-DiD cohort timing);
               esg_inclusion: 1 from the cohort quarter onward (absorbing);
               event_time:    quarters relative to cohort (negative = pre).
+  placebo     sp500_*:       the identical cohort structure for S&P 500
+                             additions (the generic-inclusion benchmark), so the
+                             ESG-specific effect = ESG ATT − S&P-500 ATT.
   outcomes    n_filers       breadth — count of 13F institutions holding;
               total_shares   depth   — aggregate shares held (unit-immune);
               total_value_usd depth  — aggregate $ held (2023 unit change
@@ -25,13 +28,12 @@ Two identification subtleties are handled here, not papered over:
     whole-$ for filings on/after 2023-01. Empirically the break is at report
     period 2022-12-31, so values for periods ≤ 2022-09-30 are ×1000'd to whole
     dollars. ``n_filers`` and ``total_shares`` are immune (only VALUE changed).
-    Amendment dedup can leave a 2023-filed amendment of a ≤2022-09-30 position
-    already in dollars inside an otherwise-thousands period — minor, documented,
-    and why the share/breadth outcomes are primary.
   * **Left-censored members.** The membership panel starts 2019Q4, so a firm
     already in the index at the window start has no observable inclusion date.
     Such firms (and corp-action-suspect adds) are NOT clean controls — they are
     flagged ``esg_excluded`` and kept out of the never-treated comparison pool.
+    The S&P 500 ever-members are excluded from the *placebo's* control pool the
+    same way (``sp500_member_ever``).
 
 13F is quarterly, so event time is in QUARTERS, not days — a coarse-timing
 caveat carried to the writeup.
@@ -41,9 +43,8 @@ into pre-period columns (lags look strictly backward); event_time supports
 balanced pre-trend tests; treated/control counts reported. See
 tests/test_panel.py.
 
-Deferred to follow-on commits (explicitly, not silently): the S&P 500 *placebo*
-arm (sp500_events isn't persisted yet), the FF-adjusted CAR secondary outcome
-(needs the full price pull), and matched-control selection (src/build/matching.py).
+Deferred (explicitly): the FF-adjusted CAR secondary outcome (needs the full
+price pull) and matched-control selection (src/build/matching.py).
 """
 
 from __future__ import annotations
@@ -78,19 +79,44 @@ def _valid_cusip(series: pd.Series) -> pd.Series:
     return s.str.fullmatch(_CUSIP_RE).fillna(False) & (s.str.slice(0, 6) != "000000")
 
 
+def _cohort_from_events(events: pd.DataFrame, date_col: str) -> tuple[pd.Series, pd.Series]:
+    """First-event calendar quarter per CUSIP → (cohort timestamp, cohort q_idx)."""
+    e = events[_valid_cusip(events["cusip"])].copy()
+    q = _cal_q_end(e[date_col])
+    e = e.assign(_q=q.to_numpy(), _qi=_q_index(q).to_numpy())
+    return e.groupby("cusip")["_q"].min(), e.groupby("cusip")["_qi"].min()
+
+
+def _apply_cohort(panel: pd.DataFrame, cohort_ts: pd.Series, cohort_qidx: pd.Series,
+                  prefix: str) -> pd.DataFrame:
+    """Add {prefix}treated/cohort/cohort_q_idx/event_time/post for one treatment arm.
+
+    `post` is absorbing from the cohort quarter. Reused for the ESG arm
+    (prefix="") and the S&P 500 placebo arm (prefix="sp500_") so the two designs
+    are constructed identically.
+    """
+    treated = panel["cusip"].isin(set(cohort_qidx.index))
+    panel[f"{prefix}treated"] = treated
+    panel[f"{prefix}cohort"] = panel["cusip"].map(cohort_ts)
+    panel[f"{prefix}cohort_q_idx"] = panel["cusip"].map(cohort_qidx).astype("Int64")
+    et = (panel["q_idx"] - panel[f"{prefix}cohort_q_idx"]).astype("Int64")
+    panel[f"{prefix}event_time"] = et
+    panel[f"{prefix}post"] = (et >= 0).fillna(False) & treated
+    return panel
+
+
 def build_panel(
     inclusion_events: pd.DataFrame,
     holdings_13f: pd.DataFrame,
     membership: pd.DataFrame | None = None,
     *,
-    prices: pd.DataFrame | None = None,       # reserved: FF-adjusted CAR (follow-on)
-    ff_factors: pd.DataFrame | None = None,   # reserved: FF-adjusted CAR (follow-on)
-    sp500_constituents: pd.DataFrame | None = None,  # reserved: placebo arm (follow-on)
+    sp500_events: pd.DataFrame | None = None,       # CUSIP-keyed S&P 500 adds (placebo)
+    sp500_member_cusips: set[str] | None = None,    # ever-S&P-500 (placebo exclusions)
+    prices: pd.DataFrame | None = None,             # reserved: FF-adjusted CAR (follow-on)
+    ff_factors: pd.DataFrame | None = None,         # reserved: FF-adjusted CAR (follow-on)
 ) -> pd.DataFrame:
-    """Assemble the firm×quarter panel: 13F outcomes + ESG-inclusion treatment.
-
-    Returns one row per (cusip, calendar-quarter) for every valid-CUSIP security
-    in the 13F panel, tagged with treatment cohort/event-time and a sample role.
+    """Assemble the firm×quarter panel: 13F outcomes + ESG-inclusion treatment
+    (+ the S&P 500 placebo arm when ``sp500_events`` is supplied).
     """
     # ── 1. Outcome panel: clean 13F to valid CUSIPs, normalise the VALUE unit ──
     h = holdings_13f[_valid_cusip(holdings_13f["cusip"])].copy()
@@ -111,31 +137,22 @@ def build_panel(
         .reset_index(drop=True)
     )
 
-    # ── 2. Treatment: genuine inclusions → cohort (first inclusion quarter) ──
+    # ── 2. ESG treatment: genuine inclusions → cohort (first inclusion quarter) ──
     ev = inclusion_events[_valid_cusip(inclusion_events["cusip"])].copy()
-    ev["q"] = _cal_q_end(ev["event_date"]).to_numpy()
-    ev["q_idx"] = _q_index(ev["q"]).to_numpy()
-
+    ev["q_idx"] = _q_index(_cal_q_end(ev["event_date"])).to_numpy()
     genuine = ev[(ev["action"] == "added") & (~ev["corp_action_suspect"])]
-    cohort = genuine.groupby("cusip")["q"].min()
-    cohort_qidx = genuine.groupby("cusip")["q_idx"].min()
-    treated_cusips = set(cohort.index)
+    cohort_ts, cohort_qidx = _cohort_from_events(genuine, "event_date")
+    treated_cusips = set(cohort_qidx.index)
 
-    # Treatment reversal: a treated firm later genuinely dropped (membership is
-    # non-absorbing). Flagged for a robustness check; cohort still = first entry.
-    removed = ev[(ev["action"] == "removed") & (~ev["corp_action_suspect"])]
-    drop_after = {
-        c: (g["q_idx"] > cohort_qidx.get(c, np.inf)).any()
-        for c, g in removed.groupby("cusip") if c in treated_cusips
-    }
-    ever_dropped = {c for c, v in drop_after.items() if v}
-
-    panel["treated"] = panel["cusip"].isin(treated_cusips)
-    panel["cohort"] = panel["cusip"].map(cohort)
-    panel["cohort_q_idx"] = panel["cusip"].map(cohort_qidx).astype("Int64")
-    panel["event_time"] = (panel["q_idx"] - panel["cohort_q_idx"]).astype("Int64")
-    panel["post"] = (panel["event_time"] >= 0).fillna(False) & panel["treated"]
+    panel = _apply_cohort(panel, cohort_ts, cohort_qidx, prefix="")
     panel["esg_inclusion"] = panel["post"]  # documented treatment-indicator alias
+
+    # Treatment reversal: a treated firm later genuinely dropped (non-absorbing).
+    removed = ev[(ev["action"] == "removed") & (~ev["corp_action_suspect"])]
+    ever_dropped = {
+        c for c, g in removed.groupby("cusip")
+        if c in treated_cusips and (g["q_idx"] > cohort_qidx.get(c, np.inf)).any()
+    }
     panel["ever_dropped"] = panel["cusip"].isin(ever_dropped)
 
     # ── 3. ESG membership flags (time-varying + ever) for roles & robustness ──
@@ -144,9 +161,9 @@ def build_panel(
         m = membership[_valid_cusip(membership["cusip"])].copy()
         m["q_idx"] = _q_index(_cal_q_end(m["as_of"])).to_numpy()
         member_ever = set(m["cusip"])
-        flag = (m[["cusip", "q_idx"]].drop_duplicates().assign(esg_member=True))
+        flag = m[["cusip", "q_idx"]].drop_duplicates().assign(esg_member=True)
         panel = panel.merge(flag, on=["cusip", "q_idx"], how="left")
-        panel["esg_member"] = panel["esg_member"].fillna(False)
+        panel["esg_member"] = panel["esg_member"].eq(True)  # True where matched, else False
     else:
         panel["esg_member"] = False
     panel["esg_member_ever"] = panel["cusip"].isin(member_ever | treated_cusips)
@@ -159,7 +176,15 @@ def build_panel(
         default="esg_excluded",
     )
 
-    # ── 5. One-quarter changes across ADJACENT observed quarters only ──
+    # ── 5. S&P 500 placebo arm (optional, symmetric with the ESG arm) ──────────
+    if sp500_events is not None and not sp500_events.empty:
+        sp_ts, sp_qidx = _cohort_from_events(sp500_events, "event_date")
+        panel = _apply_cohort(panel, sp_ts, sp_qidx, prefix="sp500_")
+        members = set(sp500_member_cusips or set()) | set(sp_qidx.index)
+        panel["sp500_member_ever"] = panel["cusip"].isin(members)
+        panel["both_treated"] = panel["treated"] & panel["sp500_treated"]
+
+    # ── 6. One-quarter changes across ADJACENT observed quarters only ──────────
     g = panel.groupby("cusip", sort=False)
     panel["gap_q"] = g["q_idx"].diff()
     adj = panel["gap_q"] == 1
@@ -175,42 +200,62 @@ def summarize(panel: pd.DataFrame) -> str:
     by_cusip = panel.drop_duplicates("cusip")
     roles = by_cusip["sample_role"].value_counts()
     treated = panel[panel["treated"]]
-    # firms with at least one pre (event_time<0) AND one post (>=0) observed quarter
     et = treated.dropna(subset=["event_time"])
-    has_pre = set(et.loc[et["event_time"] < 0, "cusip"])
-    has_post = set(et.loc[et["event_time"] >= 0, "cusip"])
-    estimable = has_pre & has_post
+    estimable = set(et.loc[et["event_time"] < 0, "cusip"]) & set(et.loc[et["event_time"] >= 0, "cusip"])
 
     lines = [
         f"panel: {len(panel):,} rows | {panel['cusip'].nunique():,} cusips | "
         f"{panel['period'].nunique()} quarters "
         f"({panel['period'].min():%Y-%m-%d}→{panel['period'].max():%Y-%m-%d})",
-        f"roles (cusips): treated={roles.get('treated', 0):,} | "
+        f"ESG roles (cusips): treated={roles.get('treated', 0):,} | "
         f"clean_control={roles.get('clean_control', 0):,} | "
         f"esg_excluded={roles.get('esg_excluded', 0):,}",
-        f"treated firm-quarters: pre={int((treated['event_time'] < 0).sum()):,} | "
+        f"ESG treated firm-quarters: pre={int((treated['event_time'] < 0).sum()):,} | "
         f"post={int((treated['event_time'] >= 0).sum()):,}",
-        f"treated cusips with both pre & post observed (estimable): {len(estimable)}",
-        f"treated cusips later dropped (treatment reversal): {int(by_cusip['ever_dropped'].sum())}",
-        "cohort sizes (cusips per first-inclusion quarter):",
+        f"ESG treated cusips with both pre & post observed (estimable): {len(estimable)}",
+        f"ESG treated cusips later dropped (reversal): {int(by_cusip['ever_dropped'].sum())}",
     ]
-    coh = (by_cusip[by_cusip["treated"]].groupby(by_cusip["cohort"].dt.date).size())
+    if "sp500_treated" in panel.columns:
+        sp = panel[panel["sp500_treated"]]
+        spet = sp.dropna(subset=["sp500_event_time"])
+        sp_est = (set(spet.loc[spet["sp500_event_time"] < 0, "cusip"]) &
+                  set(spet.loc[spet["sp500_event_time"] >= 0, "cusip"]))
+        lines += [
+            f"PLACEBO (S&P 500): treated={by_cusip['sp500_treated'].sum():,} | "
+            f"ever-member={by_cusip['sp500_member_ever'].sum():,} | "
+            f"estimable={len(sp_est)} | also-ESG-treated={int(by_cusip['both_treated'].sum())}",
+        ]
+    lines.append("ESG cohort sizes (cusips per first-inclusion quarter):")
+    coh = by_cusip[by_cusip["treated"]].groupby(by_cusip["cohort"].dt.date).size()
     lines += [f"  {d}: {n}" for d, n in coh.items()]
     return "\n".join(lines)
 
 
 def load_inputs() -> dict:
-    """Read the interim parquets this phase consumes."""
-    return {
+    """Read the interim parquets this phase consumes (+ the placebo arm if present)."""
+    src = {
         "inclusion_events": pd.read_parquet(DATA_INTERIM / "esg_inclusion_events.parquet"),
         "holdings_13f": pd.read_parquet(DATA_INTERIM / "holdings_13f.parquet"),
         "membership": pd.read_parquet(DATA_INTERIM / "esg_index_holdings.parquet"),
     }
+    try:  # placebo arm: requires the crosswalk + persisted S&P 500 events
+        from src.build.placebo import build_sp500_cusip_events, sp500_member_cusips
+        src["sp500_events"] = build_sp500_cusip_events()
+        src["sp500_member_cusips"] = sp500_member_cusips()
+    except Exception as exc:  # pragma: no cover — placebo is additive, never fatal
+        print(f"[panel] placebo arm skipped ({type(exc).__name__}: {exc})")
+        src["sp500_events"] = None
+        src["sp500_member_cusips"] = None
+    return src
 
 
 def main() -> None:
     src = load_inputs()
-    panel = build_panel(src["inclusion_events"], src["holdings_13f"], src["membership"])
+    panel = build_panel(
+        src["inclusion_events"], src["holdings_13f"], src["membership"],
+        sp500_events=src.get("sp500_events"),
+        sp500_member_cusips=src.get("sp500_member_cusips"),
+    )
     out = DATA_PROCESSED / "panel.parquet"
     panel.to_parquet(out, index=False)
     print(summarize(panel))

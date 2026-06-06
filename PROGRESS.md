@@ -2,6 +2,70 @@
 
 Running log, newest first. One entry per working session.
 
+## 2026-06-06 (cont.) — PLACEBO ARM + MATCHED CONTROLS + CAR (task #9 / Phase 2b done)
+
+**The identification scaffolding is now built: a generic-inclusion placebo, a
+matched estimation sample, and a price-reaction secondary outcome. 27 tests green
+(+14 this session).**
+
+**1. S&P 500 placebo arm — the identification centrepiece.** The ESG-specific
+effect is ESG-inclusion ATT − generic-inclusion ATT; S&P 500 additions are the
+canonical generic event. The S&P events are ticker/name-keyed (Wikipedia) but the
+panel is CUSIP-keyed (13F), and CUSIP is licensed — so `src/build/crosswalk.py`
+builds a **CUSIP→issuer-name map from every cached 13F bundle** (equity-only,
+modal name by filer-row support: **79,944 CUSIPs**) and matches S&P names onto it.
+- The matcher does exact-normalised first, then a **prominence-tie-break subset
+  fallback** (among issuers whose tokens superset the query, take the one with the
+  most 13F support). This lifted coverage from a naive unique-subset rule's 79% to
+  **92% (124/135 adds: 105 exact + 19 subset + 11 miss)**; the 11 misses are
+  recent spin-offs/IPOs/renames (FDXF, EXE, SOLS, …). Spot-checked subset hits are
+  correct (Carrier→CARRIER GLOBAL, NXP→NXP SEMICONDUCTORS N V, GE HealthCare→GE
+  HEALTHCARE TECHNOLOGIES).
+- `src/build/placebo.py` maps S&P adds→CUSIP and exposes the ever-S&P-500 pool;
+  `panel.py` now runs a **symmetric `sp500_*` cohort arm**. Placebo: **123 treated,
+  787 ever-members, 99 estimable. 58 firms are BOTH ESG- and S&P-treated**
+  (`both_treated`) — a real contamination point — leaving **65 clean-generic**
+  (S&P-add but never-ESG) firms for the contrast. Documented, not hidden.
+
+**2. Matched controls (`src/build/matching.py`).** The naive 95k never-treated
+pool is wildly inappropriate: treated firms sit **>2 SDs above pool mean** on size
+(|SMD| ≈ 2.1–2.5), because index-eligible large caps vs. the micro-cap universe.
+- Per-cohort matching at the **baseline quarter g−1** (so calendar/level
+  confounding is differenced out by the match), on the pre-treatment ownership
+  covariates the CUSIP panel carries directly: `log_value` (size proxy),
+  `log_shares`, `n_filers` (breadth). Two methods (**PSM** = pooled propensity w/
+  quarter FE + NN on the logit; **CEM** = quantile-bin exact strata), run
+  **symmetrically for both arms**. Result: ESG **332/332** and S&P **101/101**
+  matched, 0 unmatched; balance collapses to **|SMD| < 0.05 (CEM)** / **< 0.15
+  (PSM)** — the matched sample is a credible counterfactual where the raw pool was
+  not. Saved `data/processed/matched_{esg,sp500}_{psm,cem}.parquet`.
+- *Limitation, logged:* sector (GICS, free only for current S&P members) and a
+  price-based liquidity measure aren't in the CUSIP panel; they're accepted as
+  optional covariates when joined in, not silently omitted.
+
+**3. FF-adjusted CAR — the secondary (price) outcome (`src/build/car.py`).** A
+five-factor market-model event study (estimation window ≈1yr ending −22d;
+abnormal = actual−predicted excess; CAR = sum).
+- **Runs on the S&P placebo arm, honestly not the ESG arm.** A daily event study
+  needs a priceable ticker *and* a precise date; S&P adds have both (Wikipedia
+  effective dates + tickers), the ESG inclusions have **neither at resolution**
+  (no free CUSIP→ticker bridge; N-PORT gives only *quarterly* inclusion timing).
+  So the generic-inclusion CAR is the deliverable; the ESG question stays on the
+  fully-covered quarterly flow design.
+- Recovers the **modern S&P 500 index effect**: CAR[−5,+5] = **+1.35% (t=1.55,
+  n=99, 54% positive)** over the announce-to-effective window — attenuated to ~1%
+  exactly as the post-2010s arbitraged-era literature predicts; tight windows ≈0.
+  Coverage reported (99 ok; 20 insufficient pre-history = recent IPOs; 3 delisted:
+  CTLT/FRC/CDAY). Saved `data/processed/car_sp500.parquet`.
+
+### Next
+1. **Phase 3 estimation.** Freeze `PREREGISTRATION.md`; install the conda econ
+   stack (`conda install -c conda-forge pyfixest polars numba differences`);
+   implement `src/estimate/did.py` — Callaway-Sant'Anna + Sun-Abraham event study
+   around *first* inclusion (ITT, since non-absorbing), mandatory pre-trends test,
+   the **ESG-vs-placebo contrast**, the post-2022 decay break, and passive/active
+   13F heterogeneity. Run on both the full clean-control and the matched samples.
+
 ## 2026-06-06 (cont.) — FIRM×QUARTER PANEL ASSEMBLED (task #8 / Phase 2 done)
 
 **`src/build/panel.py` implemented — the analysis dataset now exists.**

@@ -24,7 +24,7 @@ import io
 import pandas as pd
 import requests
 
-from src.utils.paths import DATA_RAW
+from src.utils.paths import DATA_INTERIM, DATA_RAW
 
 WIKI_URL = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
 _UA = "esg-flows-causal academic research (github.com/JimmyKJi)"
@@ -98,13 +98,47 @@ def load_sp500_changes(refresh: bool = False) -> pd.DataFrame:
     return out
 
 
+def load_constituents(refresh: bool = False) -> pd.DataFrame:
+    """Current S&P 500 constituents (Symbol, Security, GICS Sector, CIK, …).
+
+    GICS Sector here is the only free sector classification in the project, used
+    as a matching covariate. Cached under data/raw/sp500/.
+    """
+    path = _OUT / "sp500_constituents.csv"
+    if not path.exists() or refresh:
+        load_sp500_changes(refresh=True)  # writes the constituents CSV as a side effect
+    return pd.read_csv(path)
+
+
+def build_sp500_events(refresh: bool = False) -> pd.DataFrame:
+    """Persist the placebo treatment to interim, with GICS sector attached.
+
+    Joins each change event to the current-constituents GICS Sector by ticker
+    (a slowly-varying firm attribute; NaN for firms that have since left, which
+    is acceptable for a covariate). Writes data/interim/sp500_events.parquet.
+    """
+    changes = load_sp500_changes(refresh=refresh)
+    con = load_constituents(refresh=refresh)
+    sym_c = next(c for c in con.columns if "symbol" in c.lower())
+    gics_c = next((c for c in con.columns if "gics sector" in c.lower()), None)
+    if gics_c is not None:
+        sector = con.set_index(sym_c)[gics_c]
+        changes = changes.assign(gics_sector=changes["ticker"].map(sector))
+    out = DATA_INTERIM / "sp500_events.parquet"
+    changes.to_parquet(out, index=False)
+    return changes
+
+
 def main() -> None:
-    df = load_sp500_changes(refresh=True)
+    df = build_sp500_events(refresh=True)
     adds = (df["action"] == "added").sum()
     drops = (df["action"] == "removed").sum()
     print(f"S&P 500 change events: {len(df)} ({adds} adds, {drops} drops)")
     print(f"date coverage: {df['date'].min().date()} -> {df['date'].max().date()}")
-    print(df.tail(4).to_string(index=False))
+    if "gics_sector" in df:
+        n_sec = df["gics_sector"].notna().sum()
+        print(f"GICS sector attached: {n_sec}/{len(df)} events")
+    print(f"persisted -> {DATA_INTERIM / 'sp500_events.parquet'}")
 
 
 if __name__ == "__main__":

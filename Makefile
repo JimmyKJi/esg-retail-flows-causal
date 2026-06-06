@@ -11,7 +11,7 @@ PY     := ./venv/bin/python
 PYTEST := ./venv/bin/pytest
 
 .DEFAULT_GOAL := help
-.PHONY: help data data-sec panel estimate placebo figures test clean
+.PHONY: help data data-sec panel matched car estimate placebo figures test clean
 
 help:  ## Show this help
 	@echo "ESG flows — pipeline targets:"
@@ -35,10 +35,20 @@ data-sec:  ## Pull SEC sources: 13F outcome + N-PORT treatment (REQUIRES an unbl
 # These recipes stop the build with a clear pointer rather than failing deep in
 # Python with a missing-argument error.
 
-panel:  ## Phase 2 — build the firm x quarter analysis panel (needs interim 13F + N-PORT)
+panel:  ## Phase 2 — build the firm x quarter panel + S&P 500 placebo arm (needs interim 13F + N-PORT)
 	@test -f data/interim/holdings_13f.parquet -a -f data/interim/esg_inclusion_events.parquet \
 	  || { echo "Missing interim 13F/N-PORT parquets — run 'make data-sec' from an unblocked network first."; exit 1; }
 	$(PY) -m src.build.panel
+
+matched:  ## Phase 2b — matched controls (PSM + CEM) for the ESG and placebo arms (needs panel)
+	@test -f data/processed/panel.parquet \
+	  || { echo "Missing data/processed/panel.parquet — run 'make panel' first."; exit 1; }
+	$(PY) -m src.build.matching
+
+car:  ## Phase 2b — FF-adjusted CAR secondary outcome on the S&P 500 placebo arm (needs network)
+	@test -f data/interim/sp500_events.parquet -a -f data/interim/ff_factors_daily.parquet \
+	  || { echo "Missing S&P 500 events / FF factors — run 'make data' first."; exit 1; }
+	$(PY) -m src.build.car
 
 estimate:  ## Phase 3 — event study + heterogeneity-robust staggered DiD (needs panel)
 	@echo "Phase 3 (estimate) needs data/processed/panel.parquet (make panel) and the conda econ stack."

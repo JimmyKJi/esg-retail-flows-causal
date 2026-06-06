@@ -67,8 +67,25 @@ _HOLDINGS = pd.DataFrame([
 ])
 
 
+# S&P 500 placebo arm (CUSIP-keyed adds + ever-member pool). AAA is *also* an ESG
+# inclusion (overlap → both_treated); BBB is S&P-only (a "clean generic" placebo
+# treatment); CCC is an ever-member but not a dated add (control-pool exclusion).
+_SP500_EVENTS = pd.DataFrame({
+    "cusip":      ["AAA111111", "BBB222222"],
+    "event_date": pd.to_datetime(["2020-01-15", "2022-08-15"]),  # -> 2020Q1, 2022Q3
+})
+_SP500_MEMBERS = {"AAA111111", "BBB222222", "CCC333333"}
+
+
 def _panel():
     return build_panel(_EVENTS, _HOLDINGS, _MEMBERSHIP).set_index(["cusip", "period"])
+
+
+def _panel_placebo():
+    return build_panel(
+        _EVENTS, _HOLDINGS, _MEMBERSHIP,
+        sp500_events=_SP500_EVENTS, sp500_member_cusips=_SP500_MEMBERS,
+    ).set_index(["cusip", "period"])
 
 
 def test_junk_cusips_dropped():
@@ -129,3 +146,42 @@ def test_treatment_reversal_flagged():
     # AAA is dropped in 2021Q2, after its 2020Q1 cohort -> ever_dropped.
     assert _panel().xs("AAA111111")["ever_dropped"].all()
     assert not _panel().xs("BBB222222")["ever_dropped"].any()
+
+
+# ── placebo arm (S&P 500 generic-inclusion benchmark) ─────────────────────────
+
+def test_placebo_columns_absent_unless_requested():
+    # Backward-compat: with no sp500_events, the placebo arm must not leak columns.
+    p = build_panel(_EVENTS, _HOLDINGS, _MEMBERSHIP)
+    assert not any(c.startswith("sp500_") or c == "both_treated" for c in p.columns)
+
+
+def test_placebo_cohort_is_symmetric_with_esg_arm():
+    # The S&P 500 add is built with the identical cohort/event-time/post logic.
+    bbb = _panel_placebo().xs("BBB222222")
+    assert bbb["sp500_treated"].all()
+    assert (bbb["sp500_cohort"] == pd.Timestamp("2022-09-30")).all()   # Aug-15 -> Q3
+    assert bbb.loc["2022-09-30", "sp500_event_time"] == 0
+    assert bbb.loc["2022-12-31", "sp500_event_time"] == 1
+    assert bbb.loc["2022-09-30", "sp500_post"]                         # absorbing
+    assert bbb.loc["2022-12-31", "sp500_post"]
+    # BBB is S&P-only: the ESG arm stays untouched (clean generic placebo treatment).
+    assert not bbb["treated"].any()
+    assert not bbb["post"].any()
+
+
+def test_both_treated_flags_esg_and_sp500_overlap():
+    p = _panel_placebo()
+    aaa = p.xs("AAA111111")
+    assert aaa["treated"].all() and aaa["sp500_treated"].all()
+    assert aaa["both_treated"].all()           # in BOTH index events -> contaminated
+    bbb = p.xs("BBB222222")
+    assert not bbb["both_treated"].any()        # S&P only -> usable clean generic
+
+
+def test_sp500_member_ever_excludes_from_placebo_control_pool():
+    # CCC is an ever-S&P-member but not a dated add: flagged, not placebo-treated —
+    # the placebo's analogue of dropping left-censored ESG members from controls.
+    ccc = _panel_placebo().xs("CCC333333")
+    assert ccc["sp500_member_ever"].all()
+    assert not ccc["sp500_treated"].any()
