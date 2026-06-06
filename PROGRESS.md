@@ -2,6 +2,95 @@
 
 Running log, newest first. One entry per working session.
 
+## 2026-06-06 (cont.) — PHASE 3 ESTIMATION: STAGGERED DiD + EVENT STUDY (task #10 / Phase 3 done)
+
+**The headline is a clean null, honestly reported: the apparent "ESG inclusion →
+flows" effect is the *mechanical index-inclusion* effect, not an ESG-label effect
+— and a generic S&P 500 addition pulls in ~5× more institutional breadth than an
+ESG-Leaders addition. On the credible matched design the ESG pre-trends fail, so
+even H1 is not a clean causal estimate; we say so plainly per the pre-registration
+decision rule. 40 tests green (+13 this session).**
+
+**1. What ran (`src/estimate/did.py`, the frozen Phase-3 battery).** Three
+estimators × two control pools × two arms × three outcomes, all on *levels*
+(each differences internally vs the reference period e=−1):
+- **Callaway-Sant'Anna (2021)** group-time ATT(g,t) via `differences`, aggregated
+  to a dynamic event study — HEADLINE.
+- **Sun-Abraham (2021)** interaction-weighted event study, built *manually* (no
+  `sunab` exists in `pyfixest`): a saturated cohort×event-time regression, then a
+  cohort-share-weighted aggregation matrix `A` with a delta-method covariance
+  `A V Aᵀ` that carries the windowed post-ATT and the pre-trends Wald test —
+  HEADLINE cross-check, and the estimator H2/H3 use.
+- **naive TWFE** `i(event_time, ref=−1)` — Goodman-Bacon baseline, *not* headline.
+- **Pools:** `full` (all ~95k clean controls, the pre-registered comparison) and
+  `matched_cem` (Phase-2b size/ownership match, the credible comparison).
+- Arms: ESG (334 treated) and the S&P 500 placebo (65 clean S&P-only adds; the 58
+  both-treated firms excluded). Matched controls: ESG 569, S&P 370.
+
+**2. H1 (inclusion → flows) — NOT cleanly supported; pre-trends are the binding
+constraint.** Matched-CEM Sun-Abraham breadth = **+27.6 filers (se 9.4)** post,
+but the joint pre-trends Wald **FAILS (p=0.001)**; depth (log_shares) is a precise
+**≈0 (−0.004, se 0.085, ns)**. The full-pool estimate is larger (**+79.7** filers)
+and *more* confounded (pre-trend p≈1.6e-24) — the full pool is micro-caps on a
+steep secular ownership uptrend, exactly the population mismatch Phase 2b
+flagged. Matching balances the *level* at e=−1 but not the *trend* (selection-
+into-index growth), so the pre-trend survives. This is the load-bearing failure
+the pre-registration anticipated; per its decision rule we report the
+heterogeneity-robust point estimates **with the pre-trend caveat attached**, not
+as causal. *Telling detail:* the one ESG spec whose pre-trends **PASS** is
+log_value (p=0.488) — and there the effect is a precise **zero** (−0.082, ns),
+which only reinforces the no-ESG-effect read.
+
+**3. H2 (ESG-specific = ATT_ESG − ATT_S&P) — NOT supported, and informatively so.**
+Windowed post-ATT, matched SA, breadth: **ESG +27.6 vs S&P +149.0 →
+ESG-specific = −121.5 (se 37.3, p=0.001)**. The contrast is large, significant,
+and **negative**: the ESG label attracts *less* institutional breadth than a
+plain index addition. log_shares: −0.40 (p=0.373), also not supported. The
+"ESG flow premium" is not ESG-specific — it is (a fraction of) the mechanical
+S&P-inclusion effect. The `esg_vs_placebo.png` y-axes (ESG tops ~+33, S&P ~+290)
+make the asymmetry visible at a glance.
+
+**4. H3 (legitimacy decay, cohorts split at 2022Q1) — directional but
+underpowered.** late−early windowed post-ATT is **−12.1 filers (p=0.504)** and
+**−0.13 log_shares (p=0.421)** — both *signed* the decay way, neither significant.
+With only ~3 post-2022 quarters of 13F data (pre-registered limitation) this is
+the expected power outcome; reported as not-supported, direction noted.
+
+**5. H4 (passive/active, ESG-badged heterogeneity) — NOT estimable.** The 13F
+outcome was cached as cusip×quarter aggregates, so per-filer manager (CIK)
+identity is gone. The *classification* methodology is implemented and unit-tested
+(`classify_passive`, `classify_esg_filers`); `split_passive_active` raises the
+canonical data-limitation note. Recorded honestly (`results/H4_NOT_ESTIMABLE.txt`).
+
+**6. Correctness fix shipped — IW aggregation normalization.** When `pyfixest`
+drops a collinear cohort×event cell (e.g. `d_g8090_ep2`, which sits in the
+post-window), the Sun-Abraham cohort-share weights must normalise over the
+**surviving** cells only; dividing by the full cohort count would put weight on a
+dropped cell and bias att(e) toward 0. Verified the fix perturbs *only* fits with
+a dropped post-window cell (S&P breadth +148.4→+149.0; ESG breadth unchanged at
++27.6, no post-window drop). Also fixed a formula-parser bug — literal `-` in
+dummy names is read as subtraction by `formulaic`, so event-time signs are encoded
+`m`/`p` (`d_g8090_em3` / `_ep2`) via the new `_sa_cell` helper — and a
+DataFrame-fragmentation slowdown (build dummies in one `concat` block).
+
+**7. Deliverables + wiring.** `results/{event_studies.parquet, summary.csv,
+h2_esg_specific.csv, h3_decay.csv, H4_NOT_ESTIMABLE.txt}` (committed; raw/interim
+stay gitignored); `paper/figures/{event_study,esg_vs_placebo,decay}.png` and
+`paper/tables/{summary,h2_esg_specific,h3_decay}.md` from `src/viz/figures.py`
+(reads saved results, never re-fits). `make estimate` and `make figures` now run
+the real drivers (were gated stubs); the four estimator scaffolds
+(`event_study/placebo/structural_break/heterogeneity.py`) are honest thin wrappers
+over `did.py`. `DATA_LINEAGE.md` updated for the Phase-3 outputs.
+
+### Next
+1. **Phase 5 — the writeup.** Draft the short paper around the honest result:
+   index-inclusion mechanics dominate; no ESG-specific flow premium (indeed a
+   negative contrast); pre-trend transparency as the methodological spine; the
+   SFDR/SDR/SEC normative framing. Lead with the placebo identification and the
+   pre-registration decision rule — the null is the contribution.
+2. *(Optional, data-gated)* re-ingest the raw 13F INFOTABLE keyed by filer CIK to
+   unlock H4 (passive/active, ESG-badged) — the only piece blocked on data, not code.
+
 ## 2026-06-06 (cont.) — PLACEBO ARM + MATCHED CONTROLS + CAR (task #9 / Phase 2b done)
 
 **The identification scaffolding is now built: a generic-inclusion placebo, a

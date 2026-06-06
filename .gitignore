@@ -50,6 +50,7 @@ Thumbs.db
 credentials.json
 secrets/
 
-# Results — keep final figures/tables; exclude intermediate
+# Results — keep final figures/tables/CSVs; exclude intermediate + run logs
 results/figures/*.tmp
 results/tables/*.tmp
+results/*.log

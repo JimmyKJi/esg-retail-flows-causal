@@ -1,0 +1,10 @@
+### Event-study summary (per outcome x arm)
+
+| outcome    | arm   |   cs_post_full |   twfe_pretrend_p_full | twfe_pretrend_pass_full   |   cs_post_matched |   sa_post_matched |   sa_post_se_matched |   sa_pretrend_p_matched | sa_pretrend_pass_matched   |   n_treated |   n_ctrl_full |   n_ctrl_matched |
+|:-----------|:------|---------------:|-----------------------:|:--------------------------|------------------:|------------------:|---------------------:|------------------------:|:---------------------------|------------:|--------------:|-----------------:|
+| n_filers   | esg   |         79.656 |                  0     | False                     |            31.231 |            27.555 |                9.367 |                   0.001 | False                      |         334 |         95035 |              569 |
+| n_filers   | sp500 |        203.287 |                  0     | False                     |           172.734 |           149.023 |               36.056 |                   0     | False                      |          65 |         94785 |              370 |
+| log_shares | esg   |         -0.424 |                  0.006 | False                     |            -0.011 |            -0.004 |                0.085 |                   0.027 | False                      |         334 |         95035 |              569 |
+| log_shares | sp500 |          0.447 |                  0.004 | False                     |             0.58  |             0.396 |                0.441 |                   0     | False                      |          65 |         94785 |              370 |
+| log_value  | esg   |         -0.56  |                  0.04  | False                     |            -0.098 |            -0.082 |                0.095 |                   0.488 | True                       |         334 |         95035 |              569 |
+| log_value  | sp500 |          0.397 |                  0     | False                     |             0.632 |             0.383 |                0.557 |                   0     | False                      |          65 |         94785 |              370 |

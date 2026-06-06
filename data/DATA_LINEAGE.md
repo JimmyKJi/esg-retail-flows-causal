@@ -5,7 +5,7 @@ under `data/raw/` (gitignored — never committed). Reproduce with `make data`
 (reachable sources) and `make data-sec` (SEC sources — run from a residential
 network with a real-email UA; see the access note).
 
-_Last updated: 2026-06-06 (Phase 2b — S&P 500 placebo arm, matched controls, and the FF-adjusted CAR secondary outcome added on top of the Phase 2 panel)._
+_Last updated: 2026-06-06 (Phase 3 — heterogeneity-robust staggered-DiD estimates, placebo contrast, and decay split written to `results/`; figures/tables to `paper/`)._
 
 ## Treatment — ESG-index inclusion events  **(LOCKED: SEC Form N-PORT-P)**
 
@@ -117,6 +117,17 @@ the robust source. This is the locked Phase 1 decision.
 | Output | `data/processed/car_sp500.parquet` (gitignored). Recovers the **modern S&P 500 index effect**: CAR[−5,+5] = **+1.35% (t=1.55, n=99, 54% positive)**; tight windows ≈0. Coverage: 99 ok, 20 insufficient pre-history (recent IPOs), 3 delisted (CTLT/FRC/CDAY). |
 | Caveat | **Runs on the S&P placebo arm, not the ESG arm — by data necessity, stated plainly.** A daily event study needs a priceable ticker *and* a precise date; S&P adds have both (Wikipedia effective dates + tickers), but the ESG inclusions have **neither at resolution**: there is no free CUSIP→ticker bridge for ESG-only firms, and N-PORT dates inclusion only at the fund's *fiscal quarter-end* (quarterly, not daily). So the generic-inclusion CAR is the deliverable; the ESG question stays on the fully-covered quarterly flow design. |
 | License | Derived from Yahoo (research use) + FF (academic) inputs. |
+
+## Estimation output — Phase 3 staggered-DiD results  ✅ built (Phase 3)
+
+| field | value |
+|---|---|
+| What | The frozen Phase-3 estimates: dynamic event studies, the windowed-ATT summary, the H2 ESG-specific contrast, the H3 decay split, and the H4 data-limitation note. Unlike the gitignored `data/` artefacts, these are **small and committed** so the figures are reproducible from the repo. |
+| Source | Derived — `src/estimate/did.py` on `panel.parquet` + `matched_{esg,sp500}_cem.parquet`. Estimators: Callaway-Sant'Anna 2021 (`differences`, headline dynamics), Sun-Abraham 2021 (manual interaction-weighted event study via `pyfixest`, carries the windowed inference), and a naive two-way-FE event study (`pyfixest i()`, Goodman-Bacon baseline only). Unit-tested (`tests/test_did.py`). |
+| Method | Each estimator runs on the **full clean-control pool** (pre-registered headline, but confounded — treated firms are large, controls are micro-caps on a steep secular uptrend → pre-trends fail) and the **CEM-matched pool** (credible; level balanced at g−1). Mandatory joint pre-trends Wald test on event times {−4,−3,−2}. H2 = ATT(ESG)−ATT(S&P), H3 = ATT(late)−ATT(early) split at 2022Q1, both Sun-Abraham windowed post-ATT (e=0..+4) on matched controls. |
+| Output | `results/event_studies.parquet` (tidy event-time coefficients: estimator × arm × outcome × control_pool), `results/summary.csv` (per outcome×arm windowed ATT + pre-trend p/pass), `results/h2_esg_specific.csv`, `results/h3_decay.csv`, `results/H4_NOT_ESTIMABLE.txt`. Figures `paper/figures/{event_study,esg_vs_placebo,decay}.png` and markdown tables `paper/tables/*.md` via `src/viz/figures.py`. **Committed** (only `results/*.log` is gitignored). |
+| Caveat | **H4 (filer-type heterogeneity) is not estimable** from the cached cusip×quarter aggregates (no per-filer CIK); the classification methodology is coded (`src/estimate/heterogeneity.py`) but the per-filer holdings re-ingestion is missing. All causal claims are gated on the pre-trends test per the frozen decision rule — reported honestly when it fails. |
+| License | Derived from the inputs above (US-Government-work + CC-BY-SA + research-use). |
 
 ---
 

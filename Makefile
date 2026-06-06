@@ -50,15 +50,21 @@ car:  ## Phase 2b — FF-adjusted CAR secondary outcome on the S&P 500 placebo a
 	  || { echo "Missing S&P 500 events / FF factors — run 'make data' first."; exit 1; }
 	$(PY) -m src.build.car
 
-estimate:  ## Phase 3 — event study + heterogeneity-robust staggered DiD (needs panel)
-	@echo "Phase 3 (estimate) needs data/processed/panel.parquet (make panel) and the conda econ stack."
-	@echo "See README's econometrics-stack note."; exit 1
+estimate:  ## Phase 3 — event study + heterogeneity-robust staggered DiD (needs panel + matched)
+	@test -f data/processed/panel.parquet \
+	  || { echo "Missing data/processed/panel.parquet — run 'make panel' first."; exit 1; }
+	@test -f data/processed/matched_esg_cem.parquet \
+	  || { echo "Missing matched controls — run 'make matched' first."; exit 1; }
+	$(PY) -m src.estimate.did
 
-placebo:  ## Phase 4 — ESG vs S&P 500 placebo contrast (needs both matched panels)
-	@echo "Phase 4 (placebo) needs the ESG and S&P 500 panels from 'make panel'."; exit 1
+placebo:  ## Phase 4 — ESG vs S&P 500 placebo contrast (H2; produced by 'make estimate')
+	@echo ">> H2 placebo contrast is produced by 'make estimate' -> results/h2_esg_specific.csv"
+	@test -f results/h2_esg_specific.csv || { echo "Not found — run 'make estimate' first."; exit 1; }
 
-figures:  ## Build paper figures (needs estimates)
-	@echo "Figures need estimation output (make estimate)."; exit 1
+figures:  ## Build paper figures + tables from estimation output (needs estimate)
+	@test -f results/event_studies.parquet \
+	  || { echo "Missing results/event_studies.parquet — run 'make estimate' first."; exit 1; }
+	$(PY) -m src.viz.figures
 
 # ── Quality ──────────────────────────────────────────────────────────────────
 
