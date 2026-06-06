@@ -40,10 +40,15 @@ effects (ESG +27.6→+12.2, S&P +149→+73.4) — so the largest firms carry muc
 generic-add breadth — but the ESG-specific contrast stays significantly negative
 (−61.3, p=0.015). The ordering ESG ≤ generic is not an outlier artefact.
 
+**6. Admissions polish (done).** README now leads with the `esg_vs_placebo.png`
+money shot inline and a hypothesis→verdict "Results at a glance" table (H1–H4 +
+robustness), so a reviewer sees question → picture → null in the first screen.
+Status bumped to Phase 4; module listing, test count (47), and data/reproduce
+notes refreshed. Committed `aaa858d` (battery) + `e6f9499` (polish), both pushed.
+
 ### Next
-- Admissions polish: README results section with the headline figure inline + a
-  plain-language summary up top.
 - H4 only becomes estimable by re-ingesting raw 13F INFOTABLE keyed by CIK.
+- Optional: 1-page non-technical abstract (PDF) for the application packet.
 
 ## 2026-06-06 (cont. 2) — RESEARCH NOTE WRITTEN + FULL ACCURACY AUDIT
 
