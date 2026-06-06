@@ -30,7 +30,7 @@ not more.*
 | **H1** — index inclusion moves flows | positive | ESG **+27.6** (se 9.4); S&P placebo **+149.0** (se 36.1) | Mechanical effect present; ESG pre-trend fails |
 | **H2** — ESG-*specific* premium | ESG > generic | ESG − generic = **−121.5** (se 37.3), **p = 0.001** | **Not supported — wrong sign** |
 | **H3** — legitimacy decay post-2022 | late < early | early +33.5, late +21.4; Δ = **−12.1** (se 18.1), p = 0.50 | Not supported (underpowered late cohort) |
-| **H4** — heterogeneity by filer type | concentrated | not estimable — cached 13F has no per-filer CIK (§5.4) | — |
+| **H4** — heterogeneity by filer type | concentrated in ESG/passive | re-ingested 13F at CIK grain; ESG-specific < 0 in **0 / 4** filer-type outcomes (best channel `log_shares_esg` **−1.13**, p = 0.026) | **Not supported — null survives decomposition** |
 | **Robustness** — 8 pre-registered specs | — | ESG-specific < 0 in **8 / 8**; significant in **7 / 7** that carry inference (−61 to −137 filers) | Null is robust |
 
 *Estimator: heterogeneity-robust Sun-Abraham event study on CEM-matched controls,
@@ -38,11 +38,13 @@ windowed post-ATT over event quarters 0–4. Depth (`log_shares`) is negative in
 every spec and significant in none. Full numbers in [`results/`](results/) and
 [`paper/paper.md`](paper/paper.md).*
 
-**Status:** Phase 4 complete (data → panel → matched controls + placebo →
-estimation → pre-registered robustness battery → writeup). All sources ingested
-(Fama-French, S&P 500 changes, prices; SEC N-PORT treatment + 13F outcome); panel,
-matched samples, and placebo arm built; the heterogeneity-robust staggered-DiD
-battery estimated and stress-tested across 8 specifications (`results/`),
+**Status:** Phase 5 complete (data → panel → matched controls + placebo →
+estimation → pre-registered robustness battery → filer-type heterogeneity →
+writeup). All sources ingested (Fama-French, S&P 500 changes, prices; SEC N-PORT
+treatment + 13F outcome); panel, matched samples, and placebo arm built; the
+heterogeneity-robust staggered-DiD battery estimated, stress-tested across 8
+specifications, and decomposed by 13F filer type (H4, re-ingested at CIK grain)
+(`results/`),
 figures/tables rendered (`paper/`), and the paper drafted. SEC access resolved —
 see [SEC access note](#sec-access). Hypotheses frozen in `PREREGISTRATION.md`
 before estimation; per-input provenance in `data/DATA_LINEAGE.md`.
@@ -61,8 +63,12 @@ before estimation; per-input provenance in `data/DATA_LINEAGE.md`.
    becomes politically contested.
 3. **Heterogeneity.** Split responders: passive vs active 13F filers; ESG-badged
    funds vs not — the effect should concentrate where theory predicts.
-   *(Classifier coded, but not estimable on this data: the cached 13F is
-   CUSIP×quarter aggregates with no per-filer CIK — see paper §5.4.)*
+   *(Estimated by re-ingesting the raw 13F at the filer-CIK grain and re-running
+   the placebo contrast per filer type. The null survives: no channel — including
+   passive-complex depth — shows a positive ESG-specific effect; ESG-named
+   managers' depth response is significantly weaker for ESG than generic adds.
+   13F is filed at the manager level, so ESG-named = ESG-branded firms, not ESG
+   sleeves of large complexes, which surface as passive depth — see paper §5.4.)*
 4. **Normative framing.** EU SFDR, UK SDR and the SEC climate-disclosure regime
    treat ESG ratings as quasi-authoritative signals that *lead* capital. If the
    ESG-specific effect is weak, absent, or decaying, that architecture rests on a
@@ -91,10 +97,11 @@ pulled. All raw/interim/processed data is gitignored and rebuilds from source.
 ## Repository
 ```
 src/ingest/    ff_factors, sp500_events, prices  (reachable);
-               edgar_13f, nport_holdings, edgar_session  (SEC, run unblocked)
+               edgar_13f, nport_holdings, edgar_session  (SEC, run unblocked);
+               edgar_13f_byfiler  (Phase 5 filer-CIK re-ingest, no network)
 src/build/     panel, matching, crosswalk, car, placebo   (Phase 2-2b)
 src/estimate/  did (CS + Sun-Abraham), robustness, event_study, heterogeneity,
-               placebo, structural_break                  (Phase 3-4)
+               h4_filer, placebo, structural_break        (Phase 3-5)
 src/viz/       figures
 tests/         smoke (reachable data) + SEC-transform + estimator/robustness units
 data/          raw/ interim/ processed/ (gitignored) + DATA_LINEAGE.md
@@ -107,11 +114,12 @@ paper/         writeup + figures/ tables/
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt        # ingestion stack; see note on the econ stack
 make data            # Fama-French, S&P 500, prices  (works anywhere)
-make test            # 47 tests: reachable-data smoke + SEC-transform + estimator units
+make test            # 50 tests: reachable-data smoke + SEC-transform + estimator units
 # --- the following require an unblocked network (see SEC access note) ---
 echo "SEC_EDGAR_UA=Your Name you@email.com" > .env
 make data-sec        # 13F + N-PORT
 make panel matched estimate robustness figures
+make heterogeneity   # Phase 5 — H4 filer-type re-ingest + ESG/passive contrast
 ```
 > **Econometrics stack note.** `pyfixest`/`differences`/`polars`/`numba` are
 > pinned in `requirements.txt` and run in this venv — estimation and the full

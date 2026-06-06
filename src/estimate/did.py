@@ -48,12 +48,12 @@ H1 inclusion -> flows : ATT(e) > 0 for e >= 0 on breadth & depth.
 H2 ESG-specific       : ATT(ESG) - ATT(S&P) > 0      -> ``esg_specific_contrast``.
 H3 decay post-2022    : ATT(late cohorts) < ATT(early cohorts), split at 2022Q1
                         -> ``decay_split``.
-H4 heterogeneity      : NOT estimable from the assembled panel. The 13F outcome
-                        was cached as cusip x quarter aggregates (n_filers, total
-                        shares/value); the per-filer manager (CIK) identity needed
-                        for passive/active and ESG-badged buckets was not
-                        persisted. Recorded as a data limitation (see ``H4_NOTE``);
-                        enabling it requires re-ingesting the raw 13F INFOTABLE.
+H4 heterogeneity      : not estimable from the FROZEN panel directly (it holds
+                        cusip x quarter aggregates, so per-filer manager CIK is
+                        unavailable). Estimated in Phase 5 by re-ingesting the raw
+                        13F INFOTABLE keyed by CIK (``src.ingest.edgar_13f_byfiler``)
+                        and re-running the placebo contrast per filer type
+                        (``src.estimate.h4_filer``) -> ``make heterogeneity``.
 
 A mandatory pre-trends joint Wald test (event times {-4,-3,-2} == 0) must pass
 before any coefficient is trusted; if it fails we prefer the heterogeneity-robust
@@ -79,10 +79,12 @@ PROC_DIR = Path("data/processed")
 RESULTS_DIR = Path("results")
 
 H4_NOTE = (
-    "H4 (passive/active and ESG-badged filer heterogeneity) is NOT estimable "
-    "from the assembled panel: the 13F outcome was cached as cusip x quarter "
-    "aggregates, so per-filer manager (CIK) identity is unavailable. Enabling H4 "
-    "requires re-ingesting the raw 13F INFOTABLE keyed by filer CIK."
+    "H4 (passive/active and ESG-badged filer heterogeneity) is not estimable from "
+    "the frozen panel directly: it holds cusip x quarter aggregates, so per-filer "
+    "manager (CIK) identity is unavailable. It is estimated in Phase 5 by "
+    "re-ingesting the raw 13F INFOTABLE keyed by filer CIK "
+    "(src.ingest.edgar_13f_byfiler) and re-running the placebo contrast per filer "
+    "type (src.estimate.h4_filer); run `make heterogeneity` -> results/h4_filer.csv."
 )
 
 _ARMS: dict[str, dict] = {
@@ -456,7 +458,8 @@ def main(panel_path: str = "data/processed/panel.parquet") -> None:
     pd.DataFrame(summary_rows).to_csv(RESULTS_DIR / "summary.csv", index=False)
     pd.DataFrame(h2).to_csv(RESULTS_DIR / "h2_esg_specific.csv", index=False)
     pd.DataFrame(h3).to_csv(RESULTS_DIR / "h3_decay.csv", index=False)
-    (RESULTS_DIR / "H4_NOT_ESTIMABLE.txt").write_text(H4_NOTE + "\n")
+    # H4 is produced by the Phase-5 pipeline (`make heterogeneity` ->
+    # results/h4_filer.csv), not here — see H4_NOTE.
 
     print("\nH2 ESG-specific (ATT_ESG - ATT_S&P, matched, SA):")
     for r in h2:

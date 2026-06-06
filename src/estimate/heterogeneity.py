@@ -9,12 +9,20 @@ theory predicts:
 Concentration in passive / ESG-badged responders would corroborate an
 index/label mechanism rather than broad re-rating.
 
-STATUS: H4 is NOT estimable from the assembled panel. The 13F outcome was cached
-as cusip x quarter aggregates, so the per-filer manager (CIK) identity needed to
-bucket holders is unavailable (see ``did.H4_NOTE``). The *classification*
-methodology below is implemented and unit-testable — only the per-filer holdings
-re-ingestion is missing — so ``split_passive_active`` raises an informative error
-pointing at the data limitation rather than silently returning nothing.
+STATUS: H4 is now estimable. The classification heuristics below are consumed by
+the Phase-5 re-ingest ``src.ingest.edgar_13f_byfiler``, which re-parses the cached
+raw 13F INFOTABLE at the filer (CIK) grain and writes per-type breadth/depth
+columns; ``src.estimate.h4_filer`` then merges those onto the frozen panel and runs
+the matched Sun-Abraham ESG-vs-S&P placebo contrast per filer-type outcome (run
+``make heterogeneity``). The legacy ``split_passive_active`` entry point below is
+superseded by that pipeline and still raises, redirecting callers to it rather than
+silently returning nothing.
+
+Honest finding: the aggregate null survives the decomposition. No filer-type
+channel — ESG-named managers, passive complexes, or their dollar depth — shows a
+positive ESG-specific pile-in; ``log_shares_esg`` is significantly *negative*
+(ESG-branded managers' dollar response is weaker for ESG adds than for the larger
+S&P additions). See ``h4_filer`` and ``results/h4_filer.csv``.
 """
 
 from __future__ import annotations
@@ -57,10 +65,13 @@ def classify_passive(filer_names) -> pd.Series:
 
 def split_passive_active(panel: pd.DataFrame,
                          filer_classes: pd.DataFrame | None = None) -> dict:
-    """Re-estimate the inclusion effect by filer type.
+    """Superseded legacy entry point — use the Phase-5 H4 pipeline instead.
 
-    Blocked on data, not on code: the cached panel holds cusip x quarter
-    aggregates, so holdings cannot be re-bucketed by filer CIK. Raises with the
-    canonical H4 note; enabling it requires re-ingesting the raw 13F INFOTABLE.
+    Filer-type estimation now runs via ``src.ingest.edgar_13f_byfiler`` (re-parses
+    the raw 13F INFOTABLE at CIK grain) + ``src.estimate.h4_filer`` (matched
+    Sun-Abraham ESG-vs-S&P contrast per filer-type outcome); see ``make
+    heterogeneity``. This in-panel re-bucketing was never possible — the frozen
+    panel holds cusip x quarter aggregates — so this raises, pointing at the
+    pipeline that does the work.
     """
     raise NotImplementedError(H4_NOTE)

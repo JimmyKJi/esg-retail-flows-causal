@@ -11,7 +11,7 @@ PY     := ./venv/bin/python
 PYTEST := ./venv/bin/pytest
 
 .DEFAULT_GOAL := help
-.PHONY: help data data-sec panel matched car estimate placebo robustness figures test clean
+.PHONY: help data data-sec panel matched car estimate placebo robustness heterogeneity figures test clean
 
 help:  ## Show this help
 	@echo "ESG flows — pipeline targets:"
@@ -65,6 +65,14 @@ robustness:  ## Phase 4 — pre-registered robustness battery (needs panel + mat
 	@test -f data/processed/panel.parquet -a -f data/processed/matched_esg_cem.parquet \
 	  || { echo "Missing panel/matched controls — run 'make panel matched' first."; exit 1; }
 	$(PY) -m src.estimate.robustness
+
+heterogeneity:  ## Phase 5 — H4 filer-type re-ingest + ESG/passive contrast (needs raw 13F bundles + panel + matched)
+	@ls data/raw/edgar_13f/*.zip >/dev/null 2>&1 \
+	  || { echo "Missing cached 13F bundles — run 'make data-sec' from an unblocked network first."; exit 1; }
+	@test -f data/processed/panel.parquet -a -f data/processed/matched_esg_cem.parquet \
+	  || { echo "Missing panel/matched controls — run 'make panel matched' first."; exit 1; }
+	$(PY) -m src.ingest.edgar_13f_byfiler
+	$(PY) -m src.estimate.h4_filer
 
 figures:  ## Build paper figures + tables from estimation output (needs estimate)
 	@test -f results/event_studies.parquet \

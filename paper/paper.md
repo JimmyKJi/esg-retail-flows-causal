@@ -84,8 +84,12 @@ specification, so the level estimates are reported with that caveat attached, no
 as clean causal effects; the single specification whose ESG pre-trends pass (log
 dollar value) returns a zero effect. A post-2022 cohort split is signed toward
 "legitimacy decay" but is statistically insignificant and underpowered. The
-heterogeneity hypothesis (passive vs. active, ESG-badged vs. not) is not
-estimable from the assembled data and is reported as a data limitation.
+heterogeneity hypothesis is tested by re-ingesting the raw 13F at the filer (CIK)
+grain and decomposing the response by filer type (passive vs. active, ESG-badged
+vs. not): the null survives — no filer-type channel, including passive-complex
+*depth* (the mechanical index-tracking channel), shows a positive ESG-specific
+pile-in (0 / 4 outcomes), and ESG-named managers' dollar response is significantly
+*weaker* around ESG adds than around generic additions.
 
 The contribution is therefore less a positive effect than a **credible,
 transparent null** built on a placebo-identified, pre-registered design — and an
@@ -122,8 +126,10 @@ isolates the ESG-specific component of any inclusion response.
   13F filers relative to active / non-badged filers.
 
 The **decision rule**, also pre-registered: H1–H3 are "supported" only if signed
-as predicted *and* the pre-trends test passes for the relevant sample; H4 is
-descriptive.
+as predicted *and* the pre-trends test passes for the relevant sample. H4 reuses
+the H2 contrast machinery per filer type, so an outcome is "supported" only if its
+ESG-specific contrast is positive, significant (p < 0.05), and the ESG arm's
+pre-trends pass.
 
 # 3. Data
 
@@ -286,17 +292,53 @@ neither is statistically significant. With only ~3 post-2022 quarters of 13F dat
 available, this split is underpowered by construction (a limitation that was
 pre-registered). **H3 is not supported**, with the direction noted.
 
-## 5.4 H4 — Heterogeneity (not estimable)
+## 5.4 H4 — Heterogeneity by filer type
 
-H4 requires bucketing the institutional response by filer type (passive vs.
-active; ESG-badged vs. not), which needs per-filer (per-CIK) holdings. The
-assembled 13F outcome was cached as CUSIP × quarter aggregates, so the per-filer
-manager identity is unavailable. The *classification methodology* — name-pattern
-heuristics for passive index complexes and ESG/SRI/sustainable filers — is
-implemented (`src/estimate/heterogeneity.py`), but the estimation
-is blocked on data, not code, and would require re-ingesting the raw 13F
-`INFOTABLE` keyed by CIK. This is reported as a data limitation
-(`results/H4_NOT_ESTIMABLE.txt`), not a result.
+If the flat aggregate hides a *composition* shift — ESG-badged and passive
+index-tracking managers piling in while others step back — the ESG-specific
+contrast should turn positive when we restrict the outcome to those filer types.
+H4 tests this directly. The frozen panel holds CUSIP × quarter aggregates, so to
+recover filer identity we re-ingest the raw 13F `INFOTABLE` at the manager (CIK)
+grain (`src/ingest/edgar_13f_byfiler.py`, no network — re-parses the cached
+bundles), classify each filer by name (the pre-committed passive / ESG-SRI
+heuristics in `src/estimate/heterogeneity.py`), and build per-type breadth (count
+of distinct typed filers) and depth (log1p shares held by that type) outcomes, 0
+where a name had no filer of a given type that quarter. The re-ingest reconciles
+exactly against the frozen breadth measure (max |Δ| = 0 across all 38,088
+CUSIP × quarter rows). We then run the **identical** matched Sun–Abraham
+ESG-vs-S&P contrast (§5.2) on each filer-type outcome.
+
+A measurement caveat governs the read: 13F is filed at the *manager* level, so an
+ESG sleeve inside BlackRock or Vanguard files under the parent name. The ESG-named
+columns therefore capture ESG-*branded* firms (boutiques) only; the mechanical
+ESG-ETF channel — passive complexes that track an ESG index and must buy a name on
+inclusion — surfaces as **passive depth** (`log_shares_passive`), which is the
+sharpest place to look for a mechanical effect.
+
+The aggregate null survives the decomposition. For all four filer-type outcomes
+the ESG arm shows a small positive post-ATT (+0.10 to +0.20), but the S&P placebo
+arm is *larger* in every case, so the ESG-specific contrast is **negative for all
+four** (0 / 4 supported). Neither ESG-named breadth nor — decisively — passive
+depth shows the predicted positive ESG-specific pile-in. The one contrast whose
+ESG pre-trend passes, `log_shares_esg`, is significantly **negative** (−1.13,
+p = 0.026): ESG-branded managers' dollar response is *weaker* around an ESG add
+than around a generic S&P add. The economic reading is consistent with H2 — an S&P
+500 addition is a larger real event (large-cap graduation that every manager type
+buys), whereas ESG-index inclusion is a label applied to a name funds largely held
+already. The flat aggregate is not masking a composition shift.
+
+**Table (H4).** Matched Sun–Abraham windowed post-ATT (e = 0…+4) per filer-type
+outcome; `esg_specific` = ESG − S&P placebo, se = √(se_esg² + se_sp500²).
+"Supported" requires a positive, significant (p < 0.05) contrast with the ESG
+pre-trend passing. Source: `results/h4_filer.csv`; forest plot
+`figures/h4_filer.png`.
+
+| Outcome (filer type) | ESG post-ATT (se) | S&P post-ATT (se) | ESG-specific (se) | p | ESG pre-trend | Supported |
+|---|---:|---:|---:|---:|:--:|:--:|
+| `n_filers_esg` (ESG-named, breadth) | +0.097 (0.042) | +0.310 (0.106) | −0.213 (0.114) | 0.061 | FAIL | No |
+| `n_filers_passive` (passive, breadth) | +0.100 (0.071) | +0.412 (0.225) | −0.312 (0.236) | 0.186 | FAIL | No |
+| `log_shares_passive` (passive, depth) | +0.158 (0.180) | +0.907 (0.633) | −0.749 (0.658) | 0.255 | FAIL | No |
+| `log_shares_esg` (ESG-named, depth) | +0.203 (0.227) | +1.333 (0.454) | −1.130 (0.508) | 0.026 | PASS | No |
 
 ## 5.5 Summary
 
@@ -323,7 +365,7 @@ matched pool. "PASS" = p ≥ 0.05. Source: `results/summary.csv`.
 | H2 ESG-specific, depth | −0.40 log pts (se 0.449) | 0.373 | Not supported |
 | H3 decay, breadth | −12.08 filers (se 18.09) | 0.504 | Not supported (right sign) |
 | H3 decay, depth | −0.13 log pts (se 0.16) | 0.421 | Not supported (right sign) |
-| H4 heterogeneity | — | — | Not estimable (data) |
+| H4 heterogeneity (best channel: `log_shares_esg`) | −1.13 log pts (se 0.508) | 0.026 | Not supported (0/4; sig. negative) |
 
 ## 5.6 Robustness
 

@@ -195,13 +195,66 @@ def decay_plot(outpath=FIGURES / "decay.png"):
     return outpath
 
 
+# ── Figure 4: H4 filer-type ESG-specific contrast (forest) ────────────────────
+_H4_LABEL = {
+    "n_filers_esg": "ESG-named managers\n(breadth)",
+    "n_filers_passive": "passive complexes\n(breadth)",
+    "log_shares_passive": "passive complexes\n(depth, log shares)",
+    "log_shares_esg": "ESG-named managers\n(depth, log shares)",
+}
+
+
+def h4_filer_plot(outpath=FIGURES / "h4_filer.png"):
+    """H4: ESG-specific contrast (ESG arm − S&P placebo) by filer type, with 95%
+    CIs. Faceted into breadth (counts) and depth (log shares) panels because the
+    units differ. A positive bar clear of zero would mean ESG inclusion draws that
+    filer type *specifically* — the composition shift the flat aggregate might hide.
+    """
+    h4 = _read_csv("h4_filer.csv")
+    if h4 is None or h4.empty:
+        raise FileNotFoundError("results/h4_filer.csv not found — run h4_filer.")
+    panels = [("breadth — # distinct filers", ["n_filers_esg", "n_filers_passive"]),
+              ("depth — log shares held", ["log_shares_passive", "log_shares_esg"])]
+    fig, axes = plt.subplots(1, 2, figsize=(12.4, 4.2))
+    for ax, (title, outs) in zip(axes, panels):
+        d = h4[h4["outcome"].isin(outs)].set_index("outcome").reindex(outs).dropna(how="all")
+        ys = np.arange(len(d))[::-1]
+        for y, (o, r) in zip(ys, d.iterrows()):
+            col = "#2ca02c" if bool(r["supported"]) else "#d62728"
+            ax.errorbar(r["esg_specific"], y, xerr=1.96 * r["se"], fmt="o",
+                        ms=7, capsize=4, color=col, lw=1.8, zorder=3)
+            ax.annotate(f"p={r['p_value']:.2f}", (r["esg_specific"], y),
+                        textcoords="offset points", xytext=(0, 9),
+                        ha="center", fontsize=8, color="#555")
+        ax.axvline(0, color="k", lw=0.9, zorder=2)
+        ax.set_yticks(ys)
+        ax.set_yticklabels([_H4_LABEL.get(o, o) for o in d.index], fontsize=9)
+        ax.set_ylim(-0.6, len(d) - 0.4)
+        ax.set_title(title, fontsize=10)
+        ax.set_xlabel("ESG-specific effect (ESG − S&P placebo)")
+    fig.suptitle("H4 — does ESG / passive demand respond specifically to ESG inclusion?",
+                 fontweight="bold", y=1.03)
+    fig.text(0.5, -0.06,
+             "Matched Sun-Abraham, windowed post-ATT (e=0..4). Green = positive & "
+             "significant with ESG pre-trend passing; red otherwise. 13F is filed at "
+             "the manager level, so ESG-named = ESG-branded firms, not ESG sleeves of "
+             "large complexes (those surface as passive depth).",
+             ha="center", fontsize=8, color="#555")
+    fig.tight_layout()
+    outpath.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(outpath, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    return outpath
+
+
 # ── markdown tables for the writeup ───────────────────────────────────────────
 def write_tables(outdir=TABLES):
     outdir.mkdir(parents=True, exist_ok=True)
     written = []
     for name, title in [("summary.csv", "Event-study summary (per outcome x arm)"),
                         ("h2_esg_specific.csv", "H2 — ESG-specific contrast"),
-                        ("h3_decay.csv", "H3 — legitimacy decay")]:
+                        ("h3_decay.csv", "H3 — legitimacy decay"),
+                        ("h4_filer.csv", "H4 — filer-type ESG-specific contrast")]:
         df = _read_csv(name)
         if df is None:
             continue
@@ -215,6 +268,8 @@ def write_tables(outdir=TABLES):
 def main():
     es = _load_es()
     paths = [event_study_plot(es), esg_vs_placebo_plot(es), decay_plot()]
+    if (RESULTS_DIR / "h4_filer.csv").exists():       # Phase 5, optional
+        paths.append(h4_filer_plot())
     paths += write_tables()
     for p in paths:
         print(f"wrote {p}")

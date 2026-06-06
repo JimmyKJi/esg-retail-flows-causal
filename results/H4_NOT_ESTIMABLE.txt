@@ -1,1 +1,0 @@
-H4 (passive/active and ESG-badged filer heterogeneity) is NOT estimable from the assembled panel: the 13F outcome was cached as cusip x quarter aggregates, so per-filer manager (CIK) identity is unavailable. Enabling H4 requires re-ingesting the raw 13F INFOTABLE keyed by filer CIK.

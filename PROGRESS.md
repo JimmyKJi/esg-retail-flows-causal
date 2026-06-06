@@ -2,6 +2,57 @@
 
 Running log, newest first. One entry per working session.
 
+## 2026-06-07 (cont. 4) — PHASE 5: H4 FILER-TYPE HETEROGENEITY (the real shot at the null)
+
+**The null survives the one analysis that could legitimately have broken it. We
+re-ingested the raw 13F at the manager (CIK) grain and decomposed the response by
+filer type — but the ESG-specific contrast (ATT_ESG − ATT_S&P) is *negative* for
+all four filer-type outcomes (0/4 supported). Neither ESG-named managers nor
+passive index-trackers — not even passive *depth*, the mechanical channel — pile
+into ESG adds more than into generic S&P adds. The flat aggregate is not hiding a
+composition shift. The one contrast whose ESG pre-trends pass (`log_shares_esg`)
+is significantly negative (−1.13, p=0.026). 50 tests green (+3 this session).**
+
+**1. Re-ingest, no network — `src/ingest/edgar_13f_byfiler.py`.** The frozen panel
+is cusip×quarter, so to recover filer identity I re-parse the already-cached raw
+13F bundles (`data/raw/edgar_13f/*.zip`, 2.0 GB, no SEC calls) at the CIK grain,
+classify each manager name with the pre-committed `heterogeneity.py` heuristics,
+and write per-type breadth (distinct typed filers) + depth (shares) columns over
+the 1,507-CUSIP analysis universe. Breadth dedups to one row per (cusip, CIK)
+before the boolean-sum so amendments / multi-share-class rows can't inflate it.
+**Reconciles exactly** against the frozen breadth measure: max |Δ| = 0 across all
+38,088 (cusip, period) rows.
+
+**2. Estimation — `src/estimate/h4_filer.py`.** Merges the type columns onto the
+panel on (cusip, q_idx), 0-fills genuine absences, derives `log_shares_*`, and runs
+the **identical** matched Sun-Abraham ESG-vs-S&P contrast (`did.esg_specific_contrast`)
+per outcome — so H4 inherits the exact decision rule (positive, p<.05, ESG
+pre-trend passes). Writes `results/h4_filer.csv`. 0/4 supported.
+
+**3. The honest read.** att_esg is small-positive everywhere (+0.10 to +0.20) but
+att_sp500 is *larger* every time, so the contrast is negative. Economic logic
+(consistent with H2): an S&P 500 add is a bigger real event (large-cap graduation
+every manager buys); ESG-index inclusion is a label on a name funds already hold.
+Key measurement caveat, stated everywhere: 13F is filed at the *manager* level, so
+`*_esg` captures ESG-*branded* boutiques only — the BlackRock/Vanguard ESG-sleeve
+channel surfaces as **passive depth**, which we tested directly and which is also
+negative. This bulletproofs the null against "you measured the wrong outcome."
+
+**4. Exhibits + docs.** Added `h4_filer_plot()` (forest plot, breadth/depth facets,
+red = not supported, manager-level caveat in caption) → `paper/figures/h4_filer.png`
+and `paper/tables/h4_filer.md`. Rewrote paper §5.4 from "not estimable" to a full
+results subsection + table; updated the abstract, decision rule, README "Results at
+a glance" H4 row + heterogeneity caveat + status (Phase 5), and DATA_LINEAGE with a
+Phase-5 section. Retired the now-false `results/H4_NOT_ESTIMABLE.txt` (git rm) and
+updated `did.py`/`heterogeneity.py` notes to point at the new pipeline. Added the
+`make heterogeneity` target.
+
+### Next
+- Phase 5 is the last analytical hook. Remaining is presentation: optional 1-page
+  non-technical abstract (PDF) for the application packet.
+- The normative framing (hook 4: SFDR/SDR/SEC) lives in the paper intro/conclusion;
+  could be expanded into a standalone section if a reviewer wants the policy angle.
+
 ## 2026-06-06 (cont. 3) — PHASE 4: PRE-REGISTERED ROBUSTNESS BATTERY
 
 **The headline null survives the full pre-registered robustness battery. The H2
