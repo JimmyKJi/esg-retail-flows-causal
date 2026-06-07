@@ -309,12 +309,16 @@ and depth. Point estimates with 95% CIs.](figures/decay.png)
 Splitting ESG cohorts at 2022Q1 yields a late-minus-early difference of **−12.1
 filers** on breadth (se 18.1, p = 0.504) and **−0.13 log points** on depth (se
 0.16, p = 0.421). Both are signed in the predicted (declining) direction, but
-neither is statistically significant. With only ~3 post-2022 quarters of 13F data
-available, this split is underpowered by construction (a limitation that was
-pre-registered). On this sample **H3 cannot be resolved**: the MDE at 80% power is
-≈ 51 filers — far larger than the |−12|-filer point estimate — so this is a
-*failure to detect* decay, not evidence that decay is absent. Powering it up is the
-natural v2 (§7).
+neither is statistically significant. The split is underpowered — but *not* for
+want of post-2022 data (the panel runs to 2026Q1, with **189** late-cohort ESG firms
+vs. **145** early). It is underpowered *by construction*: splitting the ESG arm into
+early (ATT +33.5, se 10.1) and late (ATT +21.4, se 15.0) halves and differencing
+yields an independent-subset SE of 18.1 that swamps the −12-filer gap — and the late
+half is the noisier of the two *despite* having more firms, because its most recent
+cohorts have truncated 0–4 post-windows. On this sample **H3 cannot be resolved**:
+the MDE at 80% power is ≈ 51 filers — far larger than the |−12|-filer point estimate
+— so this is a *failure to detect* decay, not evidence that decay is absent.
+Powering it up is the natural v2 (§7).
 
 ## 5.4 H4 — Heterogeneity by filer type
 
@@ -589,16 +593,22 @@ The limitations are substantive and pre-committed.
    first exit" treatment definition (the panel persists `ever_dropped` but not a
    per-firm exit quarter).
 
-**The natural next version (v2).** Two of the soft spots above — the ETF proxy (4)
-and the 65-event placebo arm (5) — are *data* limitations, not design flaws, and
-they are exactly what blunts the decay test (H3). The highest-value extension is
-therefore to (i) widen both arms with more inclusion events — a longer panel and/or
-additional ESG-index ETFs — and (ii) replace the ETF proxy with a cleaner, non-ETF
-index-membership source (the MSCI constituent list itself, or a licensed
-index-membership feed) so treatment timing is exact rather than inferred from a
-CUSIP diff. That v2 would not overturn the breadth null — which is already
-well-powered — but it is the only route to move H3 (legitimacy decay) from
-*inconclusive* to *answered*.
+**The natural next version (v2).** A scoping pass against the realised data shows the
+two open dimensions need *different* fixes. H2's precision is set by the **65-event
+clean placebo arm** — 58 of the 123 in-sample S&P 500 adds are *also* ESG names and
+are dropped to keep the placebo non-ESG — so extending the panel **backward** (13F
+structured filings exist from 2013; S&P 500 change history is free) would roughly
+double that arm and tighten the contrast, though H2 is already well-powered. H3, by
+contrast, is **ESG-arm only** (it splits the 334 ESG events at 2022Q1 and differences
+the halves), so a larger placebo arm does *nothing* for it; its limits are
+structural — the ETF/N-PORT proxy **cannot reach before 2019Q1** (N-PORT public data
+begins April 2019), and MSCI USA ESG Leaders is a single index with a fixed
+constituent count, so additional ESG ETFs add few new names. The only real unlock
+for H3 is therefore a **non-ETF MSCI ESG Leaders membership *history*** (licensed —
+MSCI, Bloomberg, or Refinitiv) that both extends the ESG arm back to the index's
+~2016 launch and removes the CUSIP-churn measurement error. Such a v2 would not
+overturn the well-powered breadth null, but it is the only route to move H3
+(legitimacy decay) from *inconclusive* to *answered*.
 
 # 8. Conclusion
 

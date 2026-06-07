@@ -212,14 +212,26 @@ holding; reported when it doesn't.
 ## <a name="roadmap-v2"></a>Roadmap (v2)
 The breadth null is already well-powered and won't move. The genuinely open question
 is **legitimacy decay (H3)**, which this sample is too thin to resolve (H3 p = 0.50;
-MDE ≈ 51 filers ≫ |Δ| = 12). A v2 powers it up by (i) widening **both** arms with
-**more inclusion events** — a longer panel and/or additional ESG-index ETFs — and
-(ii) replacing the ETF proxy with a **cleaner, non-ETF index-membership source** (the
-MSCI constituent list itself, or a licensed index-membership feed) so treatment
-timing is exact rather than inferred from a CUSIP diff. That is the single
-highest-leverage extension: it sharpens the placebo arm's precision (today's
-bottleneck) and is the only route to move H3 from *inconclusive* to *answered*. It
-would **not** overturn the breadth null.
+MDE ≈ 51 filers ≫ |Δ| = 12). A scoping pass against the realised data shows the two
+open dimensions need **different** fixes — and that the obvious "just add more ETFs /
+a longer panel" move barely helps the one that matters:
+
+- **H2's precision** is set by the **65-event clean placebo arm** (58 of the 123
+  in-sample S&P 500 adds are *also* ESG names, dropped to keep the placebo non-ESG).
+  Extending the panel **backward** is cheap — 13F structured filings exist from 2013
+  and S&P 500 change history is free — and would roughly double that arm. But H2 is
+  *already* well-powered, so this is low marginal value.
+- **H3 is ESG-arm only** — it splits the 334 ESG events at 2022Q1 and differences the
+  halves — so a larger placebo arm does **nothing** for it. Its limits are
+  *structural*: the ETF-holdings proxy **cannot reach before 2019Q1** (N-PORT public
+  data begins April 2019), and MSCI USA ESG Leaders is a single index with a roughly
+  fixed constituent count, so additional ESG ETFs add few new names.
+
+The **only** real unlock for H3 is a **non-ETF MSCI ESG Leaders membership *history***
+(licensed — MSCI, Bloomberg, or Refinitiv): it extends the ESG arm back to the index's
+~2016 launch *and* removes the CUSIP-churn measurement error of inferring membership
+from an ETF-holdings diff. That is the single move that converts H3 from *inconclusive*
+to *answered* — and it would **not** overturn the well-powered breadth null.
 
 ## About
 Built by Jimmy Kaian Ji — KCL Philosophy BA. Applying causal-inference

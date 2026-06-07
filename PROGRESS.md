@@ -2,6 +2,49 @@
 
 Running log, newest first. One entry per working session.
 
+## 2026-06-07 (cont. 7) — V2 SCOPING: DECOMPOSED THE BOTTLENECK BEFORE SPENDING EFFORT
+
+**Scoped v2 against the *realised* panel before committing any work — and found the
+cont. 6 "widen both arms" roadmap was partly wrong. The two open dimensions need
+*different* fixes, and the obvious "add more ETFs / a longer panel" move barely helps
+the one that matters (H3, the novel decay hook). Corrected paper §5.3 + §7, the README
+Roadmap, and the stale "~3 post-2022 quarters" power excuse. Docs-only; no results
+re-run; 56 tests still apply.**
+
+**1. The decomposition (read straight off `panel.parquet`).** ESG arm = **334**
+events (split at 2022Q1: **189** late / **145** early). S&P 500 placebo = **123** raw
+adds → **65** clean (58 are *also* ESG names, dropped to keep the placebo non-ESG) —
+that 65 is what sets H2's se ≈ 37.3. H3's se = hypot(se_early 10.06, se_late 15.03) =
+**18.09**; the late half is noisier *despite* more firms, because its most recent
+cohorts have truncated 0–4 post-windows.
+
+**2. H2 bottleneck = cheap but low-value.** H2's precision is the 65-event placebo
+arm. Extending the panel **backward** is cheap (13F structured filings exist from
+2013; S&P 500 change history is free) and would roughly double that arm — but H2 is
+*already* well-powered, so the marginal value is low.
+
+**3. H3 bottleneck = structural, and ESG-arm only.** `decay_split` (did.py:383) runs
+on the ESG arm alone — it splits the 334 ESG events and differences the halves — so a
+larger *placebo* arm does **nothing** for H3. Its real constraints are structural: the
+ETF/N-PORT holdings proxy **cannot reach before 2019Q1** (N-PORT public data begins
+April 2019 — [SEC press release 2017-226](https://www.sec.gov/newsroom/press-releases/2017-226)),
+and MSCI USA ESG Leaders is a single index with a roughly fixed constituent count, so
+adding ESG ETFs surfaces few new names.
+
+**4. The only real unlock for H3 = a licensed non-ETF membership history.** A
+**MSCI ESG Leaders constituent *history*** (subscription — MSCI, Bloomberg, or
+Refinitiv) is the single move that both extends the ESG arm back to the index's ~2016
+launch *and* removes the CUSIP-churn measurement error of inferring membership from an
+ETF-holdings diff. Supersedes the cont. 6 §4 generic "widen both arms" roadmap, which
+conflated H2's (cheap, low-value) fix with H3's (structural, licence-gated) one.
+
+### Next
+- The one decision that is the user's: whether to license a non-ETF membership feed.
+  It is the *only* route to move H3 from *inconclusive* to *answered*; everything else
+  (more ETFs, longer panel) leaves H3 where it is.
+- Absent that, the repo is submission-ready as-is: a well-powered, honestly-scoped
+  **breadth** null with a transparent credibility battery; depth + decay left open.
+
 ## 2026-06-07 (cont. 6) — VIVA-PROOFING: AUDIT + DUAL-AUDIENCE README + CLAIM-SCOPING
 
 **Hardened the briefs against a sharp reviewer. (i) Full statistical audit:
@@ -49,7 +92,10 @@ paragraph in paper §7: power up H3 (legitimacy decay) with (i) more inclusion
 events (longer panel / more ESG ETFs → both arms wider) and (ii) a cleaner non-ETF
 index-membership source (MSCI constituent list / licensed feed) for exact treatment
 timing. Would sharpen the placebo arm's precision; would *not* overturn the breadth
-null.
+null. [cont. 7 correction: "→ both arms wider" was wrong — H3 is ESG-arm only, so a
+bigger placebo arm does nothing for it. H2's fix (extend panel backward) is cheap but
+low-value; H3's fix (licensed non-ETF membership history) is the only one that moves
+the decay test. See cont. 7.]
 
 ### Next
 - v2 is the real extension if revisited: source a non-ETF index-membership feed +
@@ -313,8 +359,10 @@ make the asymmetry visible at a glance.
 **4. H3 (legitimacy decay, cohorts split at 2022Q1) — directional but
 underpowered.** late−early windowed post-ATT is **−12.1 filers (p=0.504)** and
 **−0.13 log_shares (p=0.421)** — both *signed* the decay way, neither significant.
-With only ~3 post-2022 quarters of 13F data (pre-registered limitation) this is
-the expected power outcome; reported as not-supported, direction noted.
+Underpowered by construction (splitting the ESG arm in two + differencing inflates
+the SE to 18.1); reported as inconclusive, direction noted. [cont. 6 correction: the
+earlier "~3 post-2022 quarters of data" reason was inaccurate — the panel runs to
+2026Q1 with 189 late vs 145 early ESG firms; the limit is variance, not data span.]
 
 **5. H4 (passive/active, ESG-badged heterogeneity) — NOT estimable.** The 13F
 outcome was cached as cusip×quarter aggregates, so per-filer manager (CIK)
