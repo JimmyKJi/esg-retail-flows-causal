@@ -228,9 +228,11 @@ a longer panel" move barely helps the one that matters:
   fixed constituent count, so additional ESG ETFs add few new names.
 
 The **only** real unlock for H3 is a **non-ETF MSCI ESG Leaders membership *history***
-(licensed — MSCI, Bloomberg, or Refinitiv): it extends the ESG arm back to the index's
-~2016 launch *and* removes the CUSIP-churn measurement error of inferring membership
-from an ETF-holdings diff. That is the single move that converts H3 from *inconclusive*
+(a clean machine-readable one is licensed — MSCI, Bloomberg, or Refinitiv; MSCI's free
+quarterly review notices give only forward point-in-time add/deletes, not a
+reconstructable back-history): it extends the ESG arm back to the index's ~2016 launch
+*and* removes the CUSIP-churn measurement error of inferring membership from an
+ETF-holdings diff. That is the single move that converts H3 from *inconclusive*
 to *answered* — and it would **not** overturn the well-powered breadth null.
 
 ## About

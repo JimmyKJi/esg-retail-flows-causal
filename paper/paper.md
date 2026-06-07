@@ -604,11 +604,13 @@ the halves), so a larger placebo arm does *nothing* for it; its limits are
 structural — the ETF/N-PORT proxy **cannot reach before 2019Q1** (N-PORT public data
 begins April 2019), and MSCI USA ESG Leaders is a single index with a fixed
 constituent count, so additional ESG ETFs add few new names. The only real unlock
-for H3 is therefore a **non-ETF MSCI ESG Leaders membership *history*** (licensed —
-MSCI, Bloomberg, or Refinitiv) that both extends the ESG arm back to the index's
-~2016 launch and removes the CUSIP-churn measurement error. Such a v2 would not
-overturn the well-powered breadth null, but it is the only route to move H3
-(legitimacy decay) from *inconclusive* to *answered*.
+for H3 is therefore a **non-ETF MSCI ESG Leaders membership *history***. A clean,
+machine-readable one is licensed (MSCI, Bloomberg, or Refinitiv) — MSCI's free
+quarterly index-review notices give only forward, point-in-time add/delete
+announcements, not a reconstructable back-history — and it would both extend the ESG
+arm back to the index's ~2016 launch and remove the CUSIP-churn measurement error.
+Such a v2 would not overturn the well-powered breadth null, but it is the only route
+to move H3 (legitimacy decay) from *inconclusive* to *answered*.
 
 # 8. Conclusion
 
