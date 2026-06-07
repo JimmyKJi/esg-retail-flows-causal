@@ -13,8 +13,10 @@ abstract: >
   iShares ESG-ETF N-PORT holdings — on ownership breadth (number of 13F filers)
   and depth (log shares held). The identification centrepiece is a **placebo
   arm**: the identical estimator applied to generic S&P 500 additions, so the
-  ESG-specific effect is the difference between the two. I find **no support for
-  an ESG-specific flow premium**. Inclusion is associated with a rise in
+  ESG-specific effect is the difference between the two. I find **no ESG-specific premium in
+  ownership breadth** — the dimension the design is well-powered to test — while
+  depth and the post-2022 decay split are **inconclusive (underpowered), not
+  null**. Inclusion is associated with a rise in
   ownership breadth of roughly +28 13F filers, but (i) the institutional-flow
   response to a generic S&P 500 addition is far larger (~+149 filers), so the
   ESG-minus-generic contrast is large, negative, and statistically significant
@@ -33,9 +35,10 @@ abstract: >
   honest-DiD sensitivity analysis (Rambachan–Roth 2023) shows the *negative* point
   estimate is itself pre-trend-fragile, so the conclusion rests on power, not on
   the negative sign, and a placebo-in-time randomization confirms the level effects
-  are not timing artifacts. The result is a methodologically transparent
-  null: what looks like an ESG capital-allocation effect is, on this evidence,
-  the index-inclusion mechanism — a finding with direct implications for SFDR,
+  are not timing artifacts. The result is a methodologically transparent,
+  scope-limited null: what looks like an ESG-specific pull on the *breadth* of
+  institutional ownership is, on this evidence, the generic index-inclusion
+  mechanism — a finding with direct implications for SFDR,
   SDR, and SEC disclosure regimes that treat ESG ratings as signals that *lead*
   capital.
 ---
@@ -81,14 +84,19 @@ estimator that is biased under staggered adoption with heterogeneous effects
 failure**: the pre-trends test is treated as load-bearing, and where it fails the
 paper says so rather than presenting a contaminated coefficient as causal.
 
-**Findings.** I find no support for an ESG-specific flow premium. ESG-Leaders
+**Findings.** I find no ESG-specific premium in ownership **breadth** — the one
+dimension the design is well-powered to test — while the depth and post-2022 decay
+tests are **inconclusive (underpowered), not null**. ESG-Leaders
 inclusion is associated with an increase in ownership breadth of about +28 13F
 filers over the first four post-inclusion quarters, but a generic S&P 500
 addition is associated with a far larger increase (~+149 filers); the
 ESG-minus-generic contrast is −121 filers (p = 0.001). The ordering — ESG
 response ≤ generic response — is robust across all three estimators and both
-control pools. On ownership *depth* (log shares) the ESG effect is a precise
-zero. Crucially, the ESG arm fails the pre-trends test on every breadth/depth
+control pools. On ownership *depth*, the ESG *arm's* own level response is a tight zero (−0.004,
+se 0.085), but the ESG-*specific* depth contrast is **inconclusive** — the noisy
+S&P 500 placebo depth arm leaves it underpowered (MDE ≈ 1.26 log points; the
+equivalence test does not clear), so no depth conclusion is drawn. Crucially, the
+ESG arm fails the pre-trends test on every breadth/depth
 specification, so the level estimates are reported with that caveat attached, not
 as clean causal effects; the single specification whose ESG pre-trends pass (log
 dollar value) returns a zero effect. A post-2022 cohort split is signed toward
@@ -259,7 +267,9 @@ Matching balances the level at the baseline quarter but not the pre-existing
 breadth before inclusion, so the pre-period coefficients are non-zero even in the
 matched sample. Under the pre-registered decision rule, **H1 is therefore not
 cleanly supported**: the breadth point estimate is positive but pre-trend
-contaminated, and the depth estimate is zero. The one ESG specification whose
+contaminated, and the ESG arm's own depth response is a tight zero (the
+*ESG-specific* depth contrast, §5.2, is a separate and underpowered question). The
+one ESG specification whose
 pre-trends *pass* is the secondary outcome `log_value` (p = 0.488) — and there
 the effect is a precise zero (−0.082, se 0.095), reinforcing rather than
 overturning the no-effect reading.
@@ -277,8 +287,10 @@ $$\widehat{\text{ESG-specific}} = 27.6 - 149.0 = -121.5 \text{ filers} \quad (\t
 
 The contrast is large, statistically significant, and **negative**: ESG-Leaders
 inclusion attracts *less* institutional breadth than a generic S&P 500 addition,
-not more. On depth the contrast is −0.40 log points (se 0.449, p = 0.373) — again
-non-positive. **H2 is not supported** on either outcome.
+not more. On depth the contrast is −0.40 log points (se 0.449, p = 0.373) —
+non-positive but **underpowered** (MDE ≈ 1.26 log points; §5.7), so depth is
+*inconclusive*, not a clean rejection. **H2 is not supported on breadth** — the
+well-powered outcome — while on depth the test is **inconclusive**.
 
 The qualitative ordering (ESG response ≤ generic response) is robust across all
 three estimators and both control pools (Table 1): full-pool CS (ESG +79.7 vs.
@@ -299,7 +311,10 @@ filers** on breadth (se 18.1, p = 0.504) and **−0.13 log points** on depth (se
 0.16, p = 0.421). Both are signed in the predicted (declining) direction, but
 neither is statistically significant. With only ~3 post-2022 quarters of 13F data
 available, this split is underpowered by construction (a limitation that was
-pre-registered). **H3 is not supported**, with the direction noted.
+pre-registered). On this sample **H3 cannot be resolved**: the MDE at 80% power is
+≈ 51 filers — far larger than the |−12|-filer point estimate — so this is a
+*failure to detect* decay, not evidence that decay is absent. Powering it up is the
+natural v2 (§7).
 
 ## 5.4 H4 — Heterogeneity by filer type
 
@@ -370,10 +385,10 @@ matched pool. "PASS" = p ≥ 0.05. Source: `results/summary.csv`.
 
 | Hypothesis | Estimate | p | Verdict |
 |---|---|---:|---|
-| H2 ESG-specific, breadth | −121.47 filers (se 37.25) | 0.001 | Not supported |
-| H2 ESG-specific, depth | −0.40 log pts (se 0.449) | 0.373 | Not supported |
-| H3 decay, breadth | −12.08 filers (se 18.09) | 0.504 | Not supported (right sign) |
-| H3 decay, depth | −0.13 log pts (se 0.16) | 0.421 | Not supported (right sign) |
+| H2 ESG-specific, breadth | −121.47 filers (se 37.25) | 0.001 | Not supported (well-powered null) |
+| H2 ESG-specific, depth | −0.40 log pts (se 0.449) | 0.373 | Inconclusive (underpowered) |
+| H3 decay, breadth | −12.08 filers (se 18.09) | 0.504 | Inconclusive — underpowered (right sign) |
+| H3 decay, depth | −0.13 log pts (se 0.16) | 0.421 | Inconclusive — underpowered (right sign) |
 | H4 heterogeneity (best channel: `log_shares_esg`) | −1.13 log pts (se 0.508) | 0.026 | Not supported (0/4; sig. negative) |
 
 ## 5.6 Robustness
@@ -555,8 +570,12 @@ The limitations are substantive and pre-committed.
    iShares ESG-ETF holdings, not the MSCI index list, and treatment is a CUSIP
    diff, so corporate-action CUSIP churn can masquerade as inclusion (exact-name
    cases are auto-flagged; changed-name cases reconciled in the panel build).
-5. **Modest placebo sample.** The clean-generic placebo is 65 firms; real but
-   small.
+5. **Modest placebo sample — the precision bottleneck.** The clean-generic placebo
+   is only **65 firms**. Because the ESG-specific effect is a *subtraction* of the
+   two arms, the placebo arm's noise dominates the contrast: the se of 37.25 on the
+   −121-filer estimate flows directly from this small *n*. A larger placebo arm
+   (more generic-add events) is the single highest-leverage improvement to the
+   design's precision — see the v2 note below.
 6. **Matching covariates.** Size and pre-ownership only; sector (GICS) and a
    price-based liquidity measure are not in the CUSIP-keyed panel.
 7. **ESG-arm price CAR not estimable**; the CAR is a placebo-arm benchmark only.
@@ -570,6 +589,17 @@ The limitations are substantive and pre-committed.
    first exit" treatment definition (the panel persists `ever_dropped` but not a
    per-firm exit quarter).
 
+**The natural next version (v2).** Two of the soft spots above — the ETF proxy (4)
+and the 65-event placebo arm (5) — are *data* limitations, not design flaws, and
+they are exactly what blunts the decay test (H3). The highest-value extension is
+therefore to (i) widen both arms with more inclusion events — a longer panel and/or
+additional ESG-index ETFs — and (ii) replace the ETF proxy with a cleaner, non-ETF
+index-membership source (the MSCI constituent list itself, or a licensed
+index-membership feed) so treatment timing is exact rather than inferred from a
+CUSIP diff. That v2 would not overturn the breadth null — which is already
+well-powered — but it is the only route to move H3 (legitimacy decay) from
+*inconclusive* to *answered*.
+
 # 8. Conclusion
 
 Using a pre-registered, placebo-identified staggered-DiD design on SEC
@@ -577,8 +607,10 @@ institutional-holdings data, I find no evidence that ESG-index inclusion draws
 institutional capital beyond the mechanical index-inclusion effect. ESG-Leaders
 inclusion is associated with a rise in ownership breadth, but a generic S&P 500
 addition is associated with a much larger one, so the ESG-specific contrast is
-significantly negative; ownership depth shows no ESG effect; and the post-2022
-"legitimacy decay" is directionally present but underpowered. The mandatory
+significantly negative — though that negative is itself pre-trend-fragile;
+ownership depth is **inconclusive (underpowered), not a clean zero**; and the
+post-2022 "legitimacy decay" could **not be detected** on this short post-period,
+so it is unresolved rather than refuted. The mandatory
 pre-trends test fails for the ESG arm, so the estimates are reported with that
 limitation foregrounded rather than presented as clean causal magnitudes — but
 the central ordering, ESG response ≤ generic response, holds across every

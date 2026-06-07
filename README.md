@@ -6,19 +6,25 @@ index, does institutional capital *causally* flow in — and is that an
 that *any* index add produces? And is that response **eroding** as ESG loses
 political legitimacy?
 
-**Headline finding (an honest null).** *In plain terms:* when a stock joins this
-ESG index, the inflow of institutional investors is **no larger than** when a stock
-joins an ordinary index like the S&P 500 — so the **ESG label itself draws no extra
-capital** (if anything, slightly less). What looks like an "ESG attracts
-investment" effect is really just the generic "a stock got added to an index"
-effect.
+**Headline finding (a scope-limited, honest null).** *In plain terms:* when a stock
+joins this ESG index, the **number of institutional investors** that pile in is **no
+larger than** when a stock joins an ordinary index like the S&P 500 — so the **ESG
+label itself draws no extra investors** (if anything, slightly fewer). What looks
+like an "ESG attracts investment" effect is really just the generic "a stock got
+added to an index" effect. *(This is a claim about the* number *of investors —
+"breadth"; whether ESG changes how many* shares *each one holds, or whether the pull
+is fading post-2022, this sample can't resolve — see below.)*
 
-*Precisely:* once that mechanical index-inclusion effect is differenced out with an
-S&P 500 placebo (a non-ESG comparison group), there is **no ESG-specific
-institutional-flow premium** — the ESG-minus-generic difference is **≈ −121 filers,
-p = 0.001** — and the mandatory parallel-trends test fails for the ESG group, so
-even the raw level estimate is reported with that caveat, not as clean causal
-evidence. The full writeup is in [`paper/paper.md`](paper/paper.md).
+*Precisely — and note the claim rests on **power, not on the negative number**:* the
+defensible result is **scope-limited to ownership breadth** (count of 13F filers).
+The breadth design is **well-powered** — it could detect a true ESG premium as small
+as ≈ **104** filers — yet the 95% CI **rules out even a positive premium a quarter
+the size of a generic index add**. The raw point difference (ESG minus generic ≈
+**−121 filers, p = 0.001**) is *more* negative than that, but we **don't lean on
+it**: it is itself fragile to the pre-trend problem (honest-DiD breakdown M\* ≈ 0.26)
+and the ESG arm fails the parallel-trends test. **Depth and the post-2022 "legitimacy
+decay" are inconclusive (underpowered), not null** — reported as open questions, not
+as evidence of absence. The full writeup is in [`paper/paper.md`](paper/paper.md).
 
 ![ESG-Leaders adds vs. matched S&P 500 placebo adds — institutional-breadth event study](paper/figures/esg_vs_placebo.png)
 
@@ -27,7 +33,8 @@ shaded band = pre-period parallel-trends test. **Left:** ESG-Leaders adds draw
 ≈ +28 filers. **Right:** matched generic S&P 500 adds draw ≈ +149. Differencing
 the two isolates the ESG-specific effect: **−121.5 filers (se 37.3, p = 0.001)**
 — ESG inclusion draws **less** institutional breadth than an ordinary index add,
-not more.*
+not more. (We rest the conclusion on the equivalence/power bound, not on this
+negative point estimate, which is pre-trend-fragile — see Credibility.)*
 
 <details>
 <summary><b>Plain-language primer — what the terms mean</b> (click to expand)</summary>
@@ -57,14 +64,15 @@ not more.*
 ### Results at a glance
 
 *How to read this: each row is one pre-registered hypothesis; a "filer" is one
-institutional investor; positive numbers = capital flowing in. The headline test is
-**H2** — the ESG-*specific* premium — which comes out negative.*
+institutional investor; positive numbers = more investors flowing in. The headline
+test is **H2** — the ESG-*specific* premium — a **well-powered null**: the design
+could have caught a real premium, but the 95% CI rules one out.*
 
 | Hypothesis | Prediction | Headline estimate (breadth, 13F filers) | Verdict |
 |:--|:--|:--|:--|
 | **H1** — index inclusion moves flows | positive | ESG **+27.6** (se 9.4); S&P placebo **+149.0** (se 36.1) | Mechanical effect present; ESG pre-trend fails |
-| **H2** — ESG-*specific* premium | ESG > generic | ESG − generic = **−121.5** (se 37.3), **p = 0.001** | **Not supported — wrong sign** |
-| **H3** — legitimacy decay post-2022 | late < early | early +33.5, late +21.4; Δ = **−12.1** (se 18.1), p = 0.50 | Not supported (underpowered late cohort) |
+| **H2** — ESG-*specific* premium | ESG > generic | ESG − generic = **−121.5** (se 37.3), **p = 0.001** | **Not supported — well-powered null** (CI excludes a positive premium) |
+| **H3** — legitimacy decay post-2022 | late < early | early +33.5, late +21.4; Δ = **−12.1** (se 18.1), p = 0.50 | **Inconclusive — underpowered** (MDE ≈ 51 ≫ \|Δ\|=12); right sign |
 | **H4** — heterogeneity by filer type | concentrated in ESG/passive | re-ingested 13F at CIK grain; ESG-specific < 0 in **0 / 4** filer-type outcomes (best channel `log_shares_esg` **−1.13**, p = 0.026) | **Not supported — null survives decomposition** |
 | **Robustness** — 8 pre-registered specs | — | ESG-specific < 0 in **8 / 8**; significant in **7 / 7** that carry inference (−61 to −137 filers) | Null is robust |
 | **Credibility** — power / MDE / honest DiD / placebo | — | breadth null is **well-powered** — the design could have caught a premium of ≈ **104** filers (the 80%-power floor), and the 95% CI rules out *any* positive premium; depth & decay tests **underpowered** (said so plainly); the negative estimate is itself **fragile to the pre-trend problem** (honest DiD M\* ≈ 0.26); the +28-filer level effect is **not a timing fluke** (placebo-in-time p = 0.013) | Breadth null is *evidence of absence*; rests on power, not the negative sign |
@@ -73,8 +81,10 @@ institutional investor; positive numbers = capital flowing in. The headline test
 windowed post-ATT over event quarters 0–4 — in plain terms, we line up each stock by
 quarters-since-it-joined, compare ESG joiners against non-ESG joiners matched on size
 and prior ownership, and average the investor-count gap over the four quarters after
-joining. Depth (`log_shares`) is negative in every spec and significant in none. Full
-numbers in [`results/`](results/) and [`paper/paper.md`](paper/paper.md).*
+joining. Depth (`log_shares`) is **inconclusive, not null** — negative in every spec
+and significant in none, but underpowered (MDE ≈ 1.26 log-pts; the equivalence test
+does not clear), so no depth conclusion is drawn. Full numbers in
+[`results/`](results/) and [`paper/paper.md`](paper/paper.md).*
 
 **Status:** Phase 6 complete (data → panel → matched controls + placebo →
 estimation → pre-registered robustness battery → filer-type heterogeneity →
@@ -101,7 +111,10 @@ before estimation; per-input provenance in `data/DATA_LINEAGE.md`.
    `ESG-specific effect = ESG-inclusion effect − generic-inclusion effect`.
 2. **ESG-legitimacy decay (the original contribution).** Test whether the
    institutional-flow response to ESG inclusion *weakens after ~2022*, as ESG
-   becomes politically contested.
+   becomes politically contested. *(Candid status: on this sample the decay test is
+   **underpowered** — H3 p = 0.50, MDE ≈ 51 filers ≫ |Δ| = 12 — so we could **not
+   detect** decay. That is a failure to detect, not evidence it is absent; powering
+   it up is the natural v2 — see [Roadmap](#roadmap-v2).)*
 3. **Heterogeneity.** Split responders: passive vs active 13F filers; ESG-badged
    funds vs not — the effect should concentrate where theory predicts.
    *(Estimated by re-ingesting the raw 13F at the filer-CIK grain and re-running
@@ -188,8 +201,25 @@ event timing. Index membership reconstructed via an ETF/N-PORT proxy, and
 treatment is a CUSIP diff — so corporate-action CUSIP changes (splits,
 redomiciles, renames, mergers) can masquerade as inclusions; exact-name cases are
 auto-flagged (`corp_action_suspect`) and the changed-name remainder is reconciled
-in Phase 2. Causal claims rest on the parallel-trends/placebo design holding;
-reported when it doesn't.
+in Phase 2. **The data is the soft underbelly, stated plainly:** treatment is an
+ETF-holdings *proxy* for index membership (not the MSCI list), and the S&P 500
+placebo arm is only **65 events** — that small *n* is the precision bottleneck for
+the entire ESG-specific subtraction (the se of 37.3 on the −121 estimate flows
+straight from it). The well-powered claim is **breadth only**; depth and decay are
+underpowered and left open. Causal claims rest on the parallel-trends/placebo design
+holding; reported when it doesn't.
+
+## <a name="roadmap-v2"></a>Roadmap (v2)
+The breadth null is already well-powered and won't move. The genuinely open question
+is **legitimacy decay (H3)**, which this sample is too thin to resolve (H3 p = 0.50;
+MDE ≈ 51 filers ≫ |Δ| = 12). A v2 powers it up by (i) widening **both** arms with
+**more inclusion events** — a longer panel and/or additional ESG-index ETFs — and
+(ii) replacing the ETF proxy with a **cleaner, non-ETF index-membership source** (the
+MSCI constituent list itself, or a licensed index-membership feed) so treatment
+timing is exact rather than inferred from a CUSIP diff. That is the single
+highest-leverage extension: it sharpens the placebo arm's precision (today's
+bottleneck) and is the only route to move H3 from *inconclusive* to *answered*. It
+would **not** overturn the breadth null.
 
 ## About
 Built by Jimmy Kaian Ji — KCL Philosophy BA. Applying causal-inference

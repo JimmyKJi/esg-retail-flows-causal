@@ -2,6 +2,62 @@
 
 Running log, newest first. One entry per working session.
 
+## 2026-06-07 (cont. 6) — VIVA-PROOFING: AUDIT + DUAL-AUDIENCE README + CLAIM-SCOPING
+
+**Hardened the briefs against a sharp reviewer. (i) Full statistical audit:
+reconciled every hand-typed number to `results/` — Tables 1/2/3, all H2/H3/H4 +
+robustness + credibility figures, event-study peaks, δ=183, placebo p-values, and
+the 56-test count all tie out exactly; two errors found and fixed — an MDE↔SESOI
+conflation ("a quarter the size of a generic add ≈104 filers" wrongly merged the
+80%-power MDE with the 0.25× equivalence benchmark) and an M\* rounding slip
+(0.27→0.26, true value 0.2648). (ii) Rewrote the README for two audiences:
+plain-first headline, a collapsible plain-language primer, a table reader's guide,
+and plain hooks on the dense rows — method names and exact numbers preserved. (iii)
+On pointed feedback, scoped the claim precisely everywhere: the defensible,
+well-powered result is *breadth only* (count of 13F filers); *depth* (MDE 1.26,
+equivalence FALSE) and the H3 *decay* split (MDE ≈51 ≫ |Δ|=12) are now labelled
+**inconclusive (underpowered), not null** — never "no effect." Every version now
+leads with the equivalence/power bound and demotes the −121 point estimate to a
+pre-trend-fragile footnote (M\*≈0.26) we don't lean on. Named the data soft
+underbelly loudly (ETF-holdings *proxy* + 65-event placebo arm = the precision
+bottleneck behind se 37.3) and added a v2 roadmap. Docs-only; 56 tests green;
+committed + pushed.**
+
+**1. Audit — ground truth vs hand-typed.** Dumped every result CSV/parquet and
+checked each prose/table number against it. Only two issues (both fixed in
+README/PROGRESS/DATA_LINEAGE + abstract/conclusion); §5.2 caption "+33/+290"
+verified *correct* (describes the CS-matched solid line, not the Sun-Abraham peaks)
+and left untouched — did not "fix" a right number.
+
+**2. Dual-audience README.** Plain-language story up top (the ESG label draws no
+extra *investors*; it's just the generic index-add effect), then the precise
+version; `<details>` primer glossing 13F filers / breadth / depth / the S&P-500
+placebo / parallel-trends / the well-powered "honest null"; estimator footnote
+glossed in plain terms.
+
+**3. Claim-scoping (the substantive fix).** Corrected two genuine over-claims that
+contradicted the credibility table: §1 "depth ... is a precise zero" and §5.2 "H2
+not supported on *either* outcome" → depth is the ESG *arm's* tight zero but the
+ESG-*specific* depth contrast is *inconclusive/underpowered*. Retitled verdicts
+(H2 depth, H3 breadth/depth) from "not supported" to "inconclusive — underpowered."
+Abstract, §1 Findings, §5.3, §5.5 table, §8 conclusion all rescoped to breadth +
+"could not detect decay" framing. README headline, results table, why-rigorous #2,
+estimator footnote, guardrails, and figure caption rescoped to match.
+
+**4. v2 roadmap.** New `## Roadmap (v2)` in README + a "natural next version"
+paragraph in paper §7: power up H3 (legitimacy decay) with (i) more inclusion
+events (longer panel / more ESG ETFs → both arms wider) and (ii) a cleaner non-ETF
+index-membership source (MSCI constituent list / licensed feed) for exact treatment
+timing. Would sharpen the placebo arm's precision; would *not* overturn the breadth
+null.
+
+### Next
+- v2 is the real extension if revisited: source a non-ETF index-membership feed +
+  widen the event count to move H3 from *inconclusive* to *answered*. Data-access
+  dependent (MSCI licensing / longer panel), so not started — documented as roadmap.
+- Otherwise the repo is submission-ready: well-powered, honestly-scoped breadth null
+  with a transparent credibility battery.
+
 ## 2026-06-07 (cont. 5) — PHASE 6: CREDIBILITY OF THE NULL (power, honest DiD, randomization)
 
 **Turned "we found nothing" into a bounded, defensible claim. A pre-specified
