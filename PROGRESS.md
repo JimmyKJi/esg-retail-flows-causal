@@ -2,6 +2,59 @@
 
 Running log, newest first. One entry per working session.
 
+## 2026-06-07 (cont. 5) — PHASE 6: CREDIBILITY OF THE NULL (power, honest DiD, randomization)
+
+**Turned "we found nothing" into a bounded, defensible claim. A pre-specified
+three-part credibility battery shows the ESG-specific *breadth* null is genuine
+evidence of absence — the design would have caught a positive premium a quarter the
+size of a generic add (MDE ≈ 104 filers @80% power) and the 95% CI rules one out —
+while *depth* and the H3 *decay* split are reported, honestly, as underpowered. An
+honest-DiD sensitivity analysis (Rambachan-Roth 2023) makes the most candid point
+in the paper: the *significantly negative* breadth point estimate is itself
+pre-trend-fragile (breakdown M\* ≈ 0.27 against the matched controls' large δ=183),
+so the conclusion rests on power, not on the negative sign. Placebo-in-time
+randomization confirms the +28-filer breadth level isn't a timing artifact
+(p=0.013). 56 tests green (+6 this session). Committed + pushed.**
+
+**1. Module — `src/estimate/credibility.py` (low-risk by design).** Pieces A
+(power/MDE/equivalence) and B (relative-magnitudes/honest DiD) are **pure,
+deterministic post-processing** of the frozen result CSVs/parquet — no
+re-estimation, so they can't perturb the headline. Only piece C (placebo-in-time)
+re-fits, isolated to a seeded run (`seed=12345`, 300 draws/outcome) on the
+treated∪matched-control sub-panel for speed. SESOI pre-set at ¼ of the mechanical
+inclusion effect; M-grid {0..2}; the honest-DiD bound is the conservative additive
+worst-case (point ± 1.96·se ± M·δ), deliberately looser than the exact ARP set.
+
+**2. Findings, reported either way.** A: breadth `rules_out_meaningful=True`
+(CI [−194.5, −48.5], all below the +37.3 SESOI); the two ESG-*named* H4 channels
+also rule out a meaningful effect; depth/passive/H3 are `False` (underpowered,
+stated). B: contrast breakdown M\*≈0.265, ESG-arm M\*≈0.238 — the negative sign
+breaks under a small post-trend violation, so it is *not* relied on; depth breaks at
+M\*=0 (already non-sig). C: breadth real +27.6 vs placebo mean +1.6 (sd 11.0),
+p=0.013; depth real ≈0 vs placebo, p=0.97.
+
+**3. Exhibits + wiring.** Added 3-panel `credibility_plot()` (power on an SE-axis,
+green=precise null; honest-DiD robust-CI fan with the M\* line; placebo histogram)
+→ `paper/figures/credibility.png`; 3 markdown tables via `write_tables()`. Wired
+`credibility_plot()` into `figures.main()` (guarded) and added a `make credibility`
+target (.PHONY + guards on the estimate outputs + panel). 6 unit tests pin the
+closed-form MDE/CI, the precise-vs-underpowered verdicts, the robust-bounds grid,
+and the breakdown-M edge cases to the frozen numbers.
+
+**4. Docs.** New paper §5.7 "Credibility of the null" (power/equivalence Table 3 +
+honest-DiD + placebo, with the "rests on power, not the sign" framing and the
+conservative-bound caveat); abstract + conclusion now carry the bounded-null claim;
+added the Rambachan-Roth reference. README results-at-a-glance Credibility row +
+status (Phase 6) + 56 tests + repo listing + reproduce steps; DATA_LINEAGE Phase-6
+section.
+
+### Next
+- Phase 6 closes the analytical arc (identification → robustness → heterogeneity →
+  credibility). Remaining is presentation: optional 1-page non-technical abstract
+  (PDF) for the application packet.
+- The normative framing (hook 4: SFDR/SDR/SEC) could still be expanded into a
+  standalone policy section if a reviewer wants it.
+
 ## 2026-06-07 (cont. 4) — PHASE 5: H4 FILER-TYPE HETEROGENEITY (the real shot at the null)
 
 **The null survives the one analysis that could legitimately have broken it. We

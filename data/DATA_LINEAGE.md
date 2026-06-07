@@ -151,6 +151,17 @@ the robust source. This is the locked Phase 1 decision.
 | Caveat | **13F is filed at the manager level**, so an ESG sleeve inside BlackRock/Vanguard files under the parent name — `*_esg` columns capture ESG-*branded* firms (boutiques) only, while the mechanical ESG-ETF channel surfaces as **passive depth**. Name heuristics are imperfect (documented regex, not a fund database). Finding: the null survives — ESG-specific contrast < 0 in **0/4** outcomes; the one with passing pre-trends (`log_shares_esg`) is significantly negative. |
 | License | Derived from the inputs above (US-Government-work + CC-BY-SA + research-use). |
 
+## Estimation output — Phase 6 credibility of the null  ✅ built (Phase 6)
+
+| field | value |
+|---|---|
+| What | Three pre-specified stress-tests of the headline null: **(A)** power / minimum-detectable-effect + **equivalence** (does the 95% CI exclude an economically meaningful effect, SESOI = ¼ of the mechanical inclusion benchmark); **(B)** relative-magnitudes / **honest DiD** (Rambachan-Roth 2023) — how large a post-treatment pre-trends violation, in units of the worst pre-period deviation δ, would overturn each estimate (breakdown M\*); **(C)** **placebo-in-time** randomization inference — re-assign treated names fake inclusion quarters and locate the real effect in the placebo distribution. |
+| Source | Derived — `src/estimate/credibility.py`. **A and B are pure, deterministic post-processing of the frozen result files** (`h2_esg_specific.csv`, `h3_decay.csv`, `h4_filer.csv`, `event_studies.parquet`, `summary.csv`) — no re-estimation; fully unit-tested (`tests/test_credibility.py`, 6 tests pinned to the headline numbers). **C re-fits** the frozen Sun-Abraham estimator (`did.run_sun_abraham`) on the treated∪matched-control sub-panel, 300 seeded draws per outcome (`seed=12345`, reproducible). |
+| Method | A: MDE = (z₀.₉₇₅ + z₀.₈₀)·se = 2.80·se; `rules_out_meaningful` ⇔ the 95% CI lies entirely on the non-premium side of the SESOI. B: conservative additive worst-case robust CI = point ± 1.96·se ± M·δ over an M-grid {0,…,2}; M\* = smallest M admitting 0 (deliberately looser than the exact ARP set — the against-our-own-result choice). C: fake cohorts drawn (with replacement) from the observed treated-cohort distribution; empirical two-sided p = share of placebo \|post-ATT\| ≥ \|real\|. |
+| Output | `results/credibility_power.csv` (8 contrasts), `results/credibility_honest_did.csv` (4 targets) + `..._curve.csv` (24 rows = 4×6 M-grid), `results/credibility_placebo.csv` (2 outcomes) + `..._draws.parquet` (600 draws); `paper/figures/credibility.png`, `paper/tables/credibility_*.md`. **Committed.** Finding: the ESG-specific **breadth** null is well-powered (MDE ≈ **104** filers; 95% CI rules out a positive premium), **depth & H3 decay are underpowered** (stated), the significantly-negative breadth point estimate is itself pre-trend-fragile (M\* ≈ 0.27), and the +28-filer breadth level is **not** a timing artifact (placebo p = 0.013). |
+| Caveat | The honest-DiD bound is the conservative additive worst-case, weakly looser than the exact Rambachan-Roth ARP confidence set — chosen deliberately against our own result. Placebo-in-time tests **timing**, a question logically distinct from the differential-pre-trend bias (B) that motivates the design's main caveat. No new raw data; deterministic given the frozen results + seed. |
+| License | Derived from the inputs above (US-Government-work + CC-BY-SA + research-use). |
+
 ---
 
 ## SEC EDGAR access note (resolved)

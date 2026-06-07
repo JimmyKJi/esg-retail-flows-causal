@@ -32,18 +32,22 @@ not more.*
 | **H3** — legitimacy decay post-2022 | late < early | early +33.5, late +21.4; Δ = **−12.1** (se 18.1), p = 0.50 | Not supported (underpowered late cohort) |
 | **H4** — heterogeneity by filer type | concentrated in ESG/passive | re-ingested 13F at CIK grain; ESG-specific < 0 in **0 / 4** filer-type outcomes (best channel `log_shares_esg` **−1.13**, p = 0.026) | **Not supported — null survives decomposition** |
 | **Robustness** — 8 pre-registered specs | — | ESG-specific < 0 in **8 / 8**; significant in **7 / 7** that carry inference (−61 to −137 filers) | Null is robust |
+| **Credibility** — power / MDE / honest DiD / placebo | — | breadth design well-powered (MDE ≈ **104** filers @80%; 95% CI rules out a positive premium); depth & decay **underpowered** (stated); negative point estimate itself pre-trend-fragile (honest DiD M\* ≈ 0.27); +28-filer level effect not a timing artifact (placebo-in-time p = 0.013) | Breadth null is *evidence of absence*; rests on power, not the negative sign |
 
 *Estimator: heterogeneity-robust Sun-Abraham event study on CEM-matched controls,
 windowed post-ATT over event quarters 0–4. Depth (`log_shares`) is negative in
 every spec and significant in none. Full numbers in [`results/`](results/) and
 [`paper/paper.md`](paper/paper.md).*
 
-**Status:** Phase 5 complete (data → panel → matched controls + placebo →
+**Status:** Phase 6 complete (data → panel → matched controls + placebo →
 estimation → pre-registered robustness battery → filer-type heterogeneity →
-writeup). All sources ingested (Fama-French, S&P 500 changes, prices; SEC N-PORT
+credibility-of-the-null battery → writeup). All sources ingested (Fama-French,
+S&P 500 changes, prices; SEC N-PORT
 treatment + 13F outcome); panel, matched samples, and placebo arm built; the
 heterogeneity-robust staggered-DiD battery estimated, stress-tested across 8
-specifications, and decomposed by 13F filer type (H4, re-ingested at CIK grain)
+specifications, decomposed by 13F filer type (H4, re-ingested at CIK grain), and
+put through a pre-specified credibility-of-the-null battery (power/MDE +
+equivalence + honest DiD [Rambachan-Roth] + placebo-in-time randomization)
 (`results/`),
 figures/tables rendered (`paper/`), and the paper drafted. SEC access resolved —
 see [SEC access note](#sec-access). Hypotheses frozen in `PREREGISTRATION.md`
@@ -102,6 +106,7 @@ src/ingest/    ff_factors, sp500_events, prices  (reachable);
 src/build/     panel, matching, crosswalk, car, placebo   (Phase 2-2b)
 src/estimate/  did (CS + Sun-Abraham), robustness, event_study, heterogeneity,
                h4_filer, placebo, structural_break        (Phase 3-5)
+               credibility  (Phase 6 — power/MDE + honest DiD + placebo-in-time)
 src/viz/       figures
 tests/         smoke (reachable data) + SEC-transform + estimator/robustness units
 data/          raw/ interim/ processed/ (gitignored) + DATA_LINEAGE.md
@@ -114,12 +119,14 @@ paper/         writeup + figures/ tables/
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt        # ingestion stack; see note on the econ stack
 make data            # Fama-French, S&P 500, prices  (works anywhere)
-make test            # 50 tests: reachable-data smoke + SEC-transform + estimator units
+make test            # 56 tests: reachable-data smoke + SEC-transform + estimator/credibility units
 # --- the following require an unblocked network (see SEC access note) ---
 echo "SEC_EDGAR_UA=Your Name you@email.com" > .env
 make data-sec        # 13F + N-PORT
-make panel matched estimate robustness figures
+make panel matched estimate robustness
 make heterogeneity   # Phase 5 — H4 filer-type re-ingest + ESG/passive contrast
+make credibility     # Phase 6 — power/MDE + equivalence + honest DiD + placebo-in-time
+make figures         # render all exhibits (incl. H4 + credibility panels)
 ```
 > **Econometrics stack note.** `pyfixest`/`differences`/`polars`/`numba` are
 > pinned in `requirements.txt` and run in this venv — estimation and the full

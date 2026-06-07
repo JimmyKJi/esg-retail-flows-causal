@@ -11,7 +11,7 @@ PY     := ./venv/bin/python
 PYTEST := ./venv/bin/pytest
 
 .DEFAULT_GOAL := help
-.PHONY: help data data-sec panel matched car estimate placebo robustness heterogeneity figures test clean
+.PHONY: help data data-sec panel matched car estimate placebo robustness heterogeneity credibility figures test clean
 
 help:  ## Show this help
 	@echo "ESG flows — pipeline targets:"
@@ -73,6 +73,13 @@ heterogeneity:  ## Phase 5 — H4 filer-type re-ingest + ESG/passive contrast (n
 	  || { echo "Missing panel/matched controls — run 'make panel matched' first."; exit 1; }
 	$(PY) -m src.ingest.edgar_13f_byfiler
 	$(PY) -m src.estimate.h4_filer
+
+credibility:  ## Phase 6 — credibility of the null: power/MDE + equivalence + honest DiD + placebo-in-time (needs estimate)
+	@test -f results/h2_esg_specific.csv -a -f results/event_studies.parquet -a -f results/summary.csv \
+	  || { echo "Missing estimation output — run 'make estimate' first."; exit 1; }
+	@test -f data/processed/panel.parquet \
+	  || { echo "Missing data/processed/panel.parquet — run 'make panel' first."; exit 1; }
+	$(PY) -m src.estimate.credibility
 
 figures:  ## Build paper figures + tables from estimation output (needs estimate)
 	@test -f results/event_studies.parquet \

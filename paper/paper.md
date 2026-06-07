@@ -24,7 +24,15 @@ abstract: >
   clean causal evidence. The one outcome whose ESG pre-trends pass (log dollar
   value) shows a precise zero. A post-2022 "legitimacy decay" split is
   signed in the predicted (declining) direction but is statistically
-  insignificant and underpowered. The result is a methodologically transparent
+  insignificant and underpowered. A pre-specified credibility battery converts
+  the null into a bounded claim: the breadth design is **well-powered** — it would
+  have detected an ESG premium a quarter the size of a generic add (≈104 filers)
+  at 80% power, and the 95% CI rules one out — while depth and the decay split are
+  reported as genuinely underpowered rather than as evidence of absence; an
+  honest-DiD sensitivity analysis (Rambachan–Roth 2023) shows the *negative* point
+  estimate is itself pre-trend-fragile, so the conclusion rests on power, not on
+  the negative sign, and a placebo-in-time randomization confirms the level effects
+  are not timing artifacts. The result is a methodologically transparent
   null: what looks like an ESG capital-allocation effect is, on this evidence,
   the index-inclusion mechanism — a finding with direct implications for SFDR,
   SDR, and SEC disclosure regimes that treat ESG ratings as signals that *lead*
@@ -406,6 +414,98 @@ pool (a dense saturated design — reported via the Callaway–Sant'Anna point e
 above) and the "restrict the post window to before first exit" treatment definition
 (the panel persists `ever_dropped` but not a per-firm exit quarter).
 
+## 5.7 Credibility of the null
+
+A null result earns its keep only if the design could have detected the effect it
+fails to find. We pre-specified three stress-tests (`src/estimate/credibility.py`)
+and report each whichever way it lands. A combined exhibit
+(`paper/figures/credibility.png`) collects all three.
+
+**(a) Power, minimum detectable effect, and equivalence.** For every contrast we
+report the smallest true effect a two-sided 5% test would catch with 80% power
+(MDE = 2.80 × se), the 95% CI, and whether that CI excludes an *economically
+meaningful* effect. We set the smallest effect size of interest (SESOI) at a
+quarter of the mechanical index-inclusion effect we actually observe for that
+outcome — i.e. a real ESG premium would have to be at least a quarter the size of
+a generic add to matter. A contrast "rules out a meaningful effect" when the 95%
+CI lies entirely on the non-premium side of its SESOI: a *precise* null, not merely
+a non-significant one.
+
+**Table 3.** Power / equivalence by contrast. Direction +1 = a premium is
+predicted (H2, H4); −1 = decay (H3). SESOI = ¼ × the mechanical inclusion effect.
+Source: `results/credibility_power.csv`.
+
+| Contrast | Estimate (se) | 95% CI | MDE₈₀ | SESOI | Rules out meaningful? |
+|---|---:|---:|---:|---:|:--:|
+| H2 ESG-specific, breadth | −121.5 (37.3) | [−194.5, −48.5] | 104.4 | 37.3 | **Yes** |
+| H2 ESG-specific, depth | −0.40 (0.449) | [−1.28, +0.48] | 1.26 | 0.099 | No (underpowered) |
+| H3 decay, breadth | −12.1 (18.1) | [−47.5, +23.4] | 50.7 | 8.36 | No (underpowered) |
+| H3 decay, depth | −0.13 (0.160) | [−0.44, +0.19] | 0.449 | 0.014 | No (underpowered) |
+| H4 ESG-named, breadth | −0.21 (0.114) | [−0.44, +0.01] | 0.318 | 0.077 | **Yes** |
+| H4 ESG-named, depth | −1.13 (0.508) | [−2.13, −0.13] | 1.42 | 0.333 | **Yes** |
+| H4 passive, breadth | −0.31 (0.236) | [−0.78, +0.15] | 0.662 | 0.103 | No (underpowered) |
+| H4 passive, depth | −0.75 (0.658) | [−2.04, +0.54] | 1.84 | 0.227 | No (underpowered) |
+
+The headline **breadth** null is genuinely *evidence of absence*: the design would
+have detected a positive ESG premium of ≈104 filers at 80% power, and the 95% CI's
+upper edge (−48.5) sits far below even the modest +37.3-filer SESOI. We can state
+positively that there is **no meaningful positive ESG-specific breadth premium**.
+The same precision holds for the two ESG-named filer channels in H4. **Depth and
+the H3 decay split, by contrast, are honestly underpowered** — their MDEs (1.26
+log-points, ≈51 filers) dwarf their SESOIs and their CIs straddle them. For those
+the correct statement is "absence of evidence," not "evidence of absence," and we
+do not dress it up as the latter.
+
+**(b) Sensitivity to differential pre-trends (honest DiD).** The matched design's
+pre-trends still fail (§5.5), so we bound how large a *post*-treatment
+parallel-trends violation would have to be to overturn each estimate, following the
+"relative magnitudes" logic of Rambachan & Roth (2023). We use the deliberately
+conservative additive worst-case bound — robust CI = point ± 1.96·se ± M·δ, with δ
+the largest pre-period event-time deviation — and report the breakdown M\* at which
+the robust set first admits zero. (The exact ARP confidence set is weakly tighter;
+we choose the looser, against-our-own-result bound.)
+
+The result is a candid one. The matched controls carry a large pre-period
+deviation (δ ≈ 183 filers at e = −4, because the S&P 500 placebo arm itself
+pre-trends), and against that yardstick the *significantly negative* breadth point
+estimate is fragile: a post-treatment violation of only **M\* ≈ 0.26** of the worst
+pre-period gap is enough to admit zero (the ESG arm's own level breaks at M\* ≈
+0.24). **So the negative sign is not robust, and we do not lean on it.** This does
+not rescue a positive premium — the robust set never extends into
+meaningful-premium territory; rather it sharpens the honest claim. The conclusion
+is *"no evidence of a positive ESG-specific premium, in a design powered to find
+one,"* and never *"trust the point estimate that ESG draws strictly less."* Depth
+breaks at M\* = 0 (already non-significant). Source:
+`results/credibility_honest_did.csv`.
+
+**(c) Placebo-in-time randomization inference.** Finally we re-assign each treated
+name a *fake* inclusion quarter drawn from the observed cohort distribution,
+re-estimate the Sun–Abraham post-ATT, and locate the real effect in the resulting
+placebo distribution (300 draws, seeded). This validates the analytic clustered SE
+without leaning on its asymptotics, and tests whether the breadth effect is a
+calendar-timing artifact. The ESG arm's real breadth response (+27.6 filers) sits
+in the right tail of a placebo distribution centred at zero (mean +1.6, sd 11.0),
+empirical two-sided p = **0.013**; depth (real ≈ 0) is indistinguishable from its
+placebo (p = 0.97). The breadth effect is real and not an artifact of *when* index
+adds happen — a question logically distinct from the differential-trend bias in
+(b), which concerns *whom* we compare against. Source:
+`results/credibility_placebo.csv`.
+
+Taken together: the design is well-powered to have found a positive ESG-specific
+breadth premium and finds none; the negative point estimate is itself pre-trend
+sensitive and is not relied upon; the level effects are not timing artifacts; and
+the depth/decay nulls are reported as underpowered rather than overclaimed.
+
+![Credibility of the null — power, honest DiD, and randomization inference](figures/credibility.png)
+
+*Credibility of the null. Left: each contrast on a standard-error axis; green = the
+95% CI excludes an effect as large as the SESOI (diamond), a precise null; grey =
+underpowered. Centre: the ESG-specific breadth contrast's conservative robust CI as
+the allowed pre-trend violation M grows — it admits zero at M\* ≈ 0.26, so the
+negative point estimate is fragile even though no positive premium is ever
+admitted. Right: the ESG-arm breadth effect (red) against the fake-inclusion-date
+placebo distribution (p = 0.013).*
+
 # 6. Discussion: the normative stakes
 
 The result is a null, and the null is the point. Three regulatory regimes — SFDR,
@@ -483,7 +583,13 @@ limitation foregrounded rather than presented as clean causal magnitudes — but
 the central ordering, ESG response ≤ generic response, holds across every
 estimator, control pool, and perturbation in the pre-registered robustness battery
 (§5.6) — negative in all eight specifications, significant in all seven that carry
-inference on breadth. For regulatory regimes premised on ESG ratings
+inference on breadth. A pre-specified credibility battery (§5.7) makes the null
+*bounded* rather than merely silent: the breadth design is well-powered to have
+detected a positive ESG premium a quarter the size of a generic add (≈104 filers)
+and rules one out, even as it candidly reports that the *negative* point estimate
+is itself sensitive to the documented differential pre-trend — so the claim rests
+on power, not on the sign — and that depth and the decay split remain genuinely
+underpowered. For regulatory regimes premised on ESG ratings
 *leading* capital, the institutional-flow evidence assembled here is, at best, not
 supportive — and the methodological transparency about why is itself the
 contribution.
@@ -509,6 +615,8 @@ contribution.
   Checking: Coarsened Exact Matching. *Political Analysis* 20(1), 1–24.
 - Pástor, Ľ., Stambaugh, R. F., and Taylor, L. A. (2021). Sustainable Investing in
   Equilibrium. *Journal of Financial Economics* 142(2), 550–571.
+- Rambachan, A., and Roth, J. (2023). A More Credible Approach to Parallel Trends.
+  *Review of Economic Studies* 90(5), 2555–2591.
 - Rosenbaum, P. R., and Rubin, D. B. (1983). The Central Role of the Propensity
   Score in Observational Studies for Causal Effects. *Biometrika* 70(1), 41–55.
 - Shleifer, A. (1986). Do Demand Curves for Stocks Slope Down? *Journal of

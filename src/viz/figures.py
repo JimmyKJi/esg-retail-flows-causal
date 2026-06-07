@@ -247,6 +247,123 @@ def h4_filer_plot(outpath=FIGURES / "h4_filer.png"):
     return outpath
 
 
+# ── Figure 5: credibility of the null (power / honest-DiD / randomization) ─────
+_CRED_LABEL = {
+    ("H2", "n_filers"): "H2 ESG-specific · breadth",
+    ("H2", "log_shares"): "H2 ESG-specific · depth",
+    ("H4", "n_filers_esg"): "H4 ESG-named · breadth",
+    ("H4", "log_shares_esg"): "H4 ESG-named · depth",
+    ("H4", "n_filers_passive"): "H4 passive · breadth",
+    ("H4", "log_shares_passive"): "H4 passive · depth",
+    ("H3", "n_filers"): "H3 decay · breadth",
+    ("H3", "log_shares"): "H3 decay · depth",
+}
+_CRED_ORDER = list(_CRED_LABEL)
+
+
+def credibility_plot(outpath=FIGURES / "credibility.png"):
+    """Three honest stress-tests of the null in one exhibit:
+      1. power — every contrast on a standard-error axis; green = the 95% CI
+         excludes an economically meaningful effect (a precise null), grey =
+         non-significant but underpowered;
+      2. honest DiD — the breadth ESG-specific contrast's robust 95% CI as the
+         allowed parallel-trends violation M grows, with the breakdown M*;
+      3. randomization — the breadth ESG-arm effect against a placebo distribution
+         from fake inclusion dates.
+    """
+    power = _read_csv("credibility_power.csv")
+    hd = _read_csv("credibility_honest_did.csv")
+    curve = _read_csv("credibility_honest_did_curve.csv")
+    plac = _read_csv("credibility_placebo.csv")
+    if power is None:
+        raise FileNotFoundError("results/credibility_power.csv not found — run "
+                                "`make credibility` first.")
+    draws_p = RESULTS_DIR / "credibility_placebo_draws.parquet"
+    draws = pd.read_parquet(draws_p) if draws_p.exists() else None
+
+    fig, axes = plt.subplots(1, 3, figsize=(16.4, 4.8))
+
+    # ── panel 1: power / MDE on a standard-error axis ─────────────────────────
+    ax = axes[0]
+    pw = power.set_index(["family", "outcome"])
+    rows = [k for k in _CRED_ORDER if k in pw.index]
+    ys = np.arange(len(rows))[::-1]
+    for y, key in zip(ys, rows):
+        r = pw.loc[key]
+        z = r["estimate"] / r["se"]
+        green = bool(r["rules_out_meaningful"])
+        col = "#2ca02c" if green else "#888888"
+        ax.errorbar(z, y, xerr=1.96, fmt="o", ms=6, capsize=3, color=col,
+                    lw=1.7, zorder=3)
+        # SESOI marker on the hypothesised side (smallest effect of interest)
+        s = (r["sesoi"] / r["se"]) * (1 if r["direction"] > 0 else -1)
+        ax.plot([s], [y], marker="D", ms=5, color="#444", zorder=4)
+    ax.axvline(0, color="k", lw=0.9)
+    for v in (-1.96, 1.96):
+        ax.axvline(v, color="#bbb", lw=0.8, ls=":")
+    ax.set_yticks(ys)
+    ax.set_yticklabels([_CRED_LABEL[k] for k in rows], fontsize=8.5)
+    ax.set_ylim(-0.6, len(rows) - 0.4)
+    ax.set_xlabel("estimate (standard-error units)")
+    ax.set_title("1 · Power: is the null precise or just underpowered?", fontsize=10)
+
+    # ── panel 2: honest-DiD relative-magnitudes sensitivity (breadth contrast) ─
+    ax = axes[1]
+    if curve is not None:
+        c = curve[(curve["target"] == "esg_specific") & (curve["outcome"] == "n_filers")]
+        c = c.sort_values("M")
+        x = c["M"].to_numpy(float)
+        ax.fill_between(x, c["robust_lo"], c["robust_hi"], color="#1f77b4",
+                        alpha=0.18, lw=0, zorder=1)
+        ax.plot(x, c["robust_lo"], color="#1f77b4", lw=1.6, zorder=3)
+        ax.plot(x, c["robust_hi"], color="#1f77b4", lw=1.6, zorder=3)
+        ax.axhline(0, color="k", lw=0.9, zorder=2)
+        if hd is not None:
+            row = hd[(hd["target"] == "esg_specific") & (hd["outcome"] == "n_filers")]
+            if not row.empty:
+                mstar = float(row.iloc[0]["breakdown_M"])
+                ax.axvline(mstar, color="#d62728", lw=1.3, ls="--", zorder=4)
+                ax.annotate(f"M* ≈ {mstar:.2f}\n(admits 0)", (mstar, 0),
+                            textcoords="offset points", xytext=(8, 12),
+                            fontsize=8.5, color="#d62728")
+    ax.set_xlabel("allowed pre-trend violation M  (× worst pre-period gap)")
+    ax.set_ylabel("robust 95% CI — ESG-specific breadth (filers)")
+    ax.set_title("2 · Honest DiD: robust to differential pre-trends?", fontsize=10)
+
+    # ── panel 3: placebo-in-time randomization (breadth ESG arm) ──────────────
+    ax = axes[2]
+    if draws is not None and plac is not None:
+        d = draws[draws["outcome"] == "n_filers"]["post_att"].to_numpy(float)
+        pr = plac[plac["outcome"] == "n_filers"].iloc[0]
+        ax.hist(d, bins=30, color="#bbbbbb", edgecolor="white", zorder=1)
+        ax.axvline(pr["real_post_att"], color="#d62728", lw=2.0, zorder=3)
+        ax.annotate(f"actual = {pr['real_post_att']:+.1f}\n"
+                    f"placebo p = {pr['emp_p_two_sided']:.3f}",
+                    (pr["real_post_att"], 0), textcoords="offset points",
+                    xytext=(-6, 30), ha="right", fontsize=8.5, color="#d62728")
+        ax.axvline(0, color="k", lw=0.8, ls=":", zorder=2)
+    ax.set_xlabel("ESG-arm breadth post-ATT under fake inclusion dates")
+    ax.set_ylabel("placebo draws")
+    ax.set_title("3 · Randomization: not a timing artifact", fontsize=10)
+
+    fig.suptitle("Credibility of the null — power, honest DiD, and randomization inference",
+                 fontweight="bold", y=1.03)
+    fig.text(0.5, -0.07,
+             "Panel 1: green = 95% CI excludes an effect as large as the SESOI "
+             "(diamond = ¼ of the mechanical inclusion effect) — a precise null; grey "
+             "= underpowered. Panel 2: conservative relative-magnitudes bound "
+             "(Rambachan-Roth 2023); the negative breadth point estimate is itself "
+             "pre-trend-sensitive (low M*), so the null rests on power, not on it. "
+             "Panel 3: fake-date placebo distribution centres at zero; the actual "
+             "effect sits in the tail.",
+             ha="center", fontsize=8, color="#555")
+    fig.tight_layout()
+    outpath.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(outpath, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    return outpath
+
+
 # ── markdown tables for the writeup ───────────────────────────────────────────
 def write_tables(outdir=TABLES):
     outdir.mkdir(parents=True, exist_ok=True)
@@ -254,7 +371,10 @@ def write_tables(outdir=TABLES):
     for name, title in [("summary.csv", "Event-study summary (per outcome x arm)"),
                         ("h2_esg_specific.csv", "H2 — ESG-specific contrast"),
                         ("h3_decay.csv", "H3 — legitimacy decay"),
-                        ("h4_filer.csv", "H4 — filer-type ESG-specific contrast")]:
+                        ("h4_filer.csv", "H4 — filer-type ESG-specific contrast"),
+                        ("credibility_power.csv", "Credibility — power / MDE / equivalence"),
+                        ("credibility_honest_did.csv", "Credibility — relative-magnitudes sensitivity (honest DiD)"),
+                        ("credibility_placebo.csv", "Credibility — placebo-in-time randomization inference")]:
         df = _read_csv(name)
         if df is None:
             continue
@@ -270,6 +390,8 @@ def main():
     paths = [event_study_plot(es), esg_vs_placebo_plot(es), decay_plot()]
     if (RESULTS_DIR / "h4_filer.csv").exists():       # Phase 5, optional
         paths.append(h4_filer_plot())
+    if (RESULTS_DIR / "credibility_power.csv").exists():   # Phase 6, optional
+        paths.append(credibility_plot())
     paths += write_tables()
     for p in paths:
         print(f"wrote {p}")
