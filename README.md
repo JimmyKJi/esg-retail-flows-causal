@@ -6,13 +6,19 @@ index, does institutional capital *causally* flow in — and is that an
 that *any* index add produces? And is that response **eroding** as ESG loses
 political legitimacy?
 
-**Headline finding (honest null).** Once the mechanical index-inclusion effect is
-differenced out with an S&P 500 placebo, there is **no ESG-specific institutional-
-flow premium**: ESG-Leaders inclusion draws *less* institutional breadth than a
-generic S&P 500 addition (ESG-minus-generic ≈ −121 filers, p = 0.001), and the
-mandatory pre-trends test fails for the ESG arm — so even the level estimate is
-reported with that caveat, not as clean causal evidence. The full writeup is in
-[`paper/paper.md`](paper/paper.md).
+**Headline finding (an honest null).** *In plain terms:* when a stock joins this
+ESG index, the inflow of institutional investors is **no larger than** when a stock
+joins an ordinary index like the S&P 500 — so the **ESG label itself draws no extra
+capital** (if anything, slightly less). What looks like an "ESG attracts
+investment" effect is really just the generic "a stock got added to an index"
+effect.
+
+*Precisely:* once that mechanical index-inclusion effect is differenced out with an
+S&P 500 placebo (a non-ESG comparison group), there is **no ESG-specific
+institutional-flow premium** — the ESG-minus-generic difference is **≈ −121 filers,
+p = 0.001** — and the mandatory parallel-trends test fails for the ESG group, so
+even the raw level estimate is reported with that caveat, not as clean causal
+evidence. The full writeup is in [`paper/paper.md`](paper/paper.md).
 
 ![ESG-Leaders adds vs. matched S&P 500 placebo adds — institutional-breadth event study](paper/figures/esg_vs_placebo.png)
 
@@ -23,7 +29,36 @@ the two isolates the ESG-specific effect: **−121.5 filers (se 37.3, p = 0.001)
 — ESG inclusion draws **less** institutional breadth than an ordinary index add,
 not more.*
 
+<details>
+<summary><b>Plain-language primer — what the terms mean</b> (click to expand)</summary>
+
+- **13F filers / "breadth."** Big institutional investors — mutual funds, pension
+  funds, hedge funds managing over \$100M — must report their U.S. stock holdings to
+  the SEC every quarter on a *Form 13F*. **Breadth** = how many distinct filers hold
+  a stock (how many institutions own it). **Depth** = the total shares they hold.
+  These are the outcomes we track around index inclusion.
+- **The placebo (the key trick).** When *any* stock joins a major index, funds that
+  track that index are mechanically forced to buy it — a demand bump that has nothing
+  to do with ESG. To isolate the part of the inflow that is *specifically* about the
+  ESG label, we run the identical analysis on stocks added to the ordinary **S&P 500**
+  (a non-ESG index) and subtract. What's left is the ESG-specific effect.
+- **Parallel-trends (pre-trends) test.** The method assumes treated and comparison
+  stocks were moving *in parallel* before inclusion. We test that on the pre-join
+  quarters; if they were already diverging, the estimate isn't trustworthy — and we
+  flag it when that happens (it does, for the ESG arm).
+- **"An honest null."** We pre-registered the hypotheses *before* estimation, so the
+  result can't be fished for. We find no ESG-specific premium — and crucially this is
+  a **well-powered** null: the design was sensitive enough to catch a premium a
+  quarter the size of the mechanical effect, so "we found nothing" means "there is
+  probably nothing there," not "our test was too weak to tell."
+
+</details>
+
 ### Results at a glance
+
+*How to read this: each row is one pre-registered hypothesis; a "filer" is one
+institutional investor; positive numbers = capital flowing in. The headline test is
+**H2** — the ESG-*specific* premium — which comes out negative.*
 
 | Hypothesis | Prediction | Headline estimate (breadth, 13F filers) | Verdict |
 |:--|:--|:--|:--|
@@ -32,12 +67,14 @@ not more.*
 | **H3** — legitimacy decay post-2022 | late < early | early +33.5, late +21.4; Δ = **−12.1** (se 18.1), p = 0.50 | Not supported (underpowered late cohort) |
 | **H4** — heterogeneity by filer type | concentrated in ESG/passive | re-ingested 13F at CIK grain; ESG-specific < 0 in **0 / 4** filer-type outcomes (best channel `log_shares_esg` **−1.13**, p = 0.026) | **Not supported — null survives decomposition** |
 | **Robustness** — 8 pre-registered specs | — | ESG-specific < 0 in **8 / 8**; significant in **7 / 7** that carry inference (−61 to −137 filers) | Null is robust |
-| **Credibility** — power / MDE / honest DiD / placebo | — | breadth design well-powered (MDE ≈ **104** filers @80%; 95% CI rules out a positive premium); depth & decay **underpowered** (stated); negative point estimate itself pre-trend-fragile (honest DiD M\* ≈ 0.27); +28-filer level effect not a timing artifact (placebo-in-time p = 0.013) | Breadth null is *evidence of absence*; rests on power, not the negative sign |
+| **Credibility** — power / MDE / honest DiD / placebo | — | breadth null is **well-powered** — the design could have caught a premium of ≈ **104** filers (the 80%-power floor), and the 95% CI rules out *any* positive premium; depth & decay tests **underpowered** (said so plainly); the negative estimate is itself **fragile to the pre-trend problem** (honest DiD M\* ≈ 0.26); the +28-filer level effect is **not a timing fluke** (placebo-in-time p = 0.013) | Breadth null is *evidence of absence*; rests on power, not the negative sign |
 
 *Estimator: heterogeneity-robust Sun-Abraham event study on CEM-matched controls,
-windowed post-ATT over event quarters 0–4. Depth (`log_shares`) is negative in
-every spec and significant in none. Full numbers in [`results/`](results/) and
-[`paper/paper.md`](paper/paper.md).*
+windowed post-ATT over event quarters 0–4 — in plain terms, we line up each stock by
+quarters-since-it-joined, compare ESG joiners against non-ESG joiners matched on size
+and prior ownership, and average the investor-count gap over the four quarters after
+joining. Depth (`log_shares`) is negative in every spec and significant in none. Full
+numbers in [`results/`](results/) and [`paper/paper.md`](paper/paper.md).*
 
 **Status:** Phase 6 complete (data → panel → matched controls + placebo →
 estimation → pre-registered robustness battery → filer-type heterogeneity →

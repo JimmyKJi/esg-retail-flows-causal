@@ -25,10 +25,11 @@ abstract: >
   value) shows a precise zero. A post-2022 "legitimacy decay" split is
   signed in the predicted (declining) direction but is statistically
   insignificant and underpowered. A pre-specified credibility battery converts
-  the null into a bounded claim: the breadth design is **well-powered** — it would
-  have detected an ESG premium a quarter the size of a generic add (≈104 filers)
-  at 80% power, and the 95% CI rules one out — while depth and the decay split are
-  reported as genuinely underpowered rather than as evidence of absence; an
+  the null into a bounded claim: the breadth design is **well-powered** — its
+  minimum detectable effect at 80% power is ≈104 filers, and its 95% CI rules out a
+  positive ESG premium even a quarter the size of a generic add — while depth and
+  the decay split are reported as genuinely underpowered rather than as evidence of
+  absence; an
   honest-DiD sensitivity analysis (Rambachan–Roth 2023) shows the *negative* point
   estimate is itself pre-trend-fragile, so the conclusion rests on power, not on
   the negative sign, and a placebo-in-time randomization confirms the level effects
@@ -584,9 +585,10 @@ the central ordering, ESG response ≤ generic response, holds across every
 estimator, control pool, and perturbation in the pre-registered robustness battery
 (§5.6) — negative in all eight specifications, significant in all seven that carry
 inference on breadth. A pre-specified credibility battery (§5.7) makes the null
-*bounded* rather than merely silent: the breadth design is well-powered to have
-detected a positive ESG premium a quarter the size of a generic add (≈104 filers)
-and rules one out, even as it candidly reports that the *negative* point estimate
+*bounded* rather than merely silent: the breadth design is well-powered — its
+minimum detectable effect at 80% power is ≈104 filers, and its 95% CI rules out a
+positive ESG premium even a quarter the size of a generic add — even as it candidly
+reports that the *negative* point estimate
 is itself sensitive to the documented differential pre-trend — so the claim rests
 on power, not on the sign — and that depth and the decay split remain genuinely
 underpowered. For regulatory regimes premised on ESG ratings

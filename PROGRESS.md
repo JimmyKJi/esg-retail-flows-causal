@@ -6,12 +6,13 @@ Running log, newest first. One entry per working session.
 
 **Turned "we found nothing" into a bounded, defensible claim. A pre-specified
 three-part credibility battery shows the ESG-specific *breadth* null is genuine
-evidence of absence — the design would have caught a positive premium a quarter the
-size of a generic add (MDE ≈ 104 filers @80% power) and the 95% CI rules one out —
-while *depth* and the H3 *decay* split are reported, honestly, as underpowered. An
+evidence of absence — the design's minimum detectable effect at 80% power is ≈104
+filers, and the 95% CI rules out a positive premium even a quarter the size of a
+generic add — while *depth* and the H3 *decay* split are reported, honestly, as
+underpowered. An
 honest-DiD sensitivity analysis (Rambachan-Roth 2023) makes the most candid point
 in the paper: the *significantly negative* breadth point estimate is itself
-pre-trend-fragile (breakdown M\* ≈ 0.27 against the matched controls' large δ=183),
+pre-trend-fragile (breakdown M\* ≈ 0.26 against the matched controls' large δ=183),
 so the conclusion rests on power, not on the negative sign. Placebo-in-time
 randomization confirms the +28-filer breadth level isn't a timing artifact
 (p=0.013). 56 tests green (+6 this session). Committed + pushed.**
