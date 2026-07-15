@@ -1,1 +1,1 @@
-"""esg-retail-flows-causal: causal inference study of ESG ratings and capital flows."""
+"""esg-institutional-flows-causal: causal-inference study of institutional capital flows around ESG index inclusion."""
