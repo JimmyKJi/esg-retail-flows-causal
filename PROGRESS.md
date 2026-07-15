@@ -585,8 +585,9 @@ abnormal = actual−predicted excess; CAR = sum).
 - **Data-quality finding (matters for identification):** a pure CUSIP diff turns
   corporate actions into fake inclusions — ~20% of adds have a same-quarter
   name-similar drop. Added a conservative `corp_action_suspect` flag (exact
-  normalized-name same-quarter add+drop = split/redomicile churn): **27 flagged
-  → 481 genuine inclusions.** Changed-name renames/mergers (AXA Equitable→
+  normalized-name same-quarter add+drop = split/redomicile churn): **27 rows
+  flagged (both the add and the drop side of each pair; 13 add-side) →
+  494 − 13 = 481 genuine inclusions.** Changed-name renames/mergers (AXA Equitable→
   Equitable; BB&T+SunTrust→Truist; Arconic→Howmet) evade exact-name matching and
   are a documented Phase-2 reconciliation step (not silently dropped).
 - 6 tests still green (pure cores unchanged).

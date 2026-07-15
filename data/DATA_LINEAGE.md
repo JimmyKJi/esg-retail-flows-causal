@@ -16,7 +16,7 @@ _Last updated: 2026-06-06 (Phase 3 — heterogeneity-robust staggered-DiD estima
 | URL | browse-EDGAR atom by fund *series* id (`?action=getcompany&CIK=S000065418&type=NPORT-P&output=atom`) → `https://www.sec.gov/Archives/edgar/data/1100663/<accession>/primary_doc.xml` |
 | Method | Diff consecutive quarterly snapshots; CUSIP present at quarter *t* but not *t−1* = inclusion. Same-quarter exact-name add+drop pairs (split/redomicile CUSIP churn) flagged `corp_action_suspect`. Code: `src/ingest/nport_holdings.py`. |
 | License | US Government work — public domain |
-| Date pulled | 2026-06-05 — SUSL+SUSA quarterly N-PORT (2020→2026): 946 raw events (494 adds); 27 flagged as identifier churn → **481 genuine inclusions**. CUSIP is the join key (tickers absent in N-PORT). |
+| Date pulled | 2026-06-05 — SUSL+SUSA quarterly N-PORT (2020→2026): 946 raw events (494 adds); 27 rows flagged as identifier churn (flagged on both the add and the drop side of each pair; 13 add-side) → 494 − 13 = **481 genuine inclusions**. CUSIP is the join key (tickers absent in N-PORT). |
 | Caveat | As-of dates are fiscal-quarter-ends (Feb/May/Aug/Nov for SUSL) — offset ~1 month from 13F calendar quarters (Mar/Jun/Sep/Dec); aligned in Phase 2. **Changed-name** renames/mergers (AXA Equitable→Equitable; BB&T+SunTrust→Truist) evade the exact-name flag and are reconciled in Phase 2 before events become treatment. |
 
 **Why N-PORT, not the build plan's first suggestions?** The plan offered (1) an

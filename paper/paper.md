@@ -156,9 +156,10 @@ data` / `make data-sec` and are not committed; the small estimation outputs are.
 
 **Treatment — ESG inclusion (SEC Form N-PORT-P).** Quarterly N-PORT holdings of
 SUSL and SUSA, 2020–2026, diffed across consecutive snapshots. Of 946 raw
-add/drop events (494 adds), 27 are flagged as identifier churn (same-quarter
-exact-name add+drop pairs from CUSIP changes), leaving **481 genuine
-inclusions**. The cohort for each treated firm is its **first** inclusion
+add/drop events (494 adds), 27 rows are flagged as identifier churn —
+same-quarter exact-name add+drop pairs minted by CUSIP changes, flagged on
+both the add and the drop side — removing 13 add-side events and leaving 481
+genuine inclusions. The cohort for each treated firm is its **first** inclusion
 quarter. Treatment is defined as first inclusion and treated as absorbing
 (intention-to-treat), even though 177/334 firms later exit the index — so
 long-horizon ATTs are attenuated by exits, reported rather than corrected.
