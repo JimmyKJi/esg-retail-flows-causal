@@ -171,7 +171,12 @@ rolling up by CUSIP, the outcome panel has **988,292 CUSIP×quarter rows across 
 quarters (2019Q1–2026Q1)**. Two outcomes are primary: `n_filers` (breadth: the
 count of distinct 13F filers holding the CUSIP) and `log_shares` (depth: log
 aggregate shares). Shares and filer counts are immune to the 2023 change in 13F
-dollar-value reporting units; `log_value` is therefore secondary.
+dollar-value reporting units; `log_value` is therefore secondary. The period-level
+unit normalisation is itself imperfect: filers that adopted whole-dollar reporting
+ahead of the mandatory switch are over-scaled by the ×1000 rule, leaving a ≈3×
+step-down in the panel's median dollar value at 2022Q4 — absorbed by the
+calendar-quarter fixed effects in log space, and one more reason `log_value` stays
+secondary.
 
 **Analysis panel.** Joining outcome, treatment, and membership flags yields
 `panel.parquet`: **904,589 rows, 95,572 CUSIPs, 29 quarters**, with **334
@@ -188,8 +193,9 @@ excluded, leaving **65 clean-generic** firms (S&P-added, never ESG-treated) as t
 primary placebo.
 
 **Matched controls.** The full clean-control pool is dominated by micro-caps; the
-treated firms are large index-eligible names, sitting >2 standard deviations above
-the pool mean on size (|SMD| ≈ 2.1–2.5). I therefore build per-cohort matched
+treated firms are large index-eligible names, sitting far above the pool mean on
+size (|SMD| ≈ 2.1–2.5 on the ESG arm, ≈ 1.4–1.8 on the S&P arm). I therefore
+build per-cohort matched
 samples at the baseline quarter g−1 on pre-treatment ownership covariates
 (`log_value`, `log_shares`, `n_filers`), using both propensity-score matching
 (PSM) and coarsened exact matching (CEM; Iacus, King and Porro 2012), run
@@ -609,7 +615,11 @@ for H3 is therefore a **non-ETF MSCI ESG Leaders membership *history***. A clean
 machine-readable one is licensed (MSCI, Bloomberg, or Refinitiv) — MSCI's free
 quarterly index-review notices give only forward, point-in-time add/delete
 announcements, not a reconstructable back-history — and it would both extend the ESG
-arm back to the index's ~2016 launch and remove the CUSIP-churn measurement error.
+arm years before the 2019Q1 N-PORT floor and remove the CUSIP-churn measurement
+error. (The Extended ESG Leaders index SUSL tracks launched only in February 2019;
+the pre-2019 history runs through its parent, the MSCI USA ESG Leaders index —
+renamed the MSCI Selection Indexes in 2025 — whose constituent history dates to the
+family's 2013 launch, with computed history to 2000.)
 Such a v2 would not overturn the well-powered breadth null, but it is the only route
 to move H3 (legitimacy decay) from *inconclusive* to *answered*.
 

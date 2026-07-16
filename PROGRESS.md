@@ -2,6 +2,75 @@
 
 Running log, newest first. One entry per working session.
 
+## 2026-07-16 (cont. 8) — FULL ACCURACY AUDIT: EVERY NUMBER RECOMPUTED, EVERY SOURCE CHECKED
+
+**Recomputed every data-level claim in README / paper / DATA_LINEAGE /
+PREREGISTRATION directly from the parquets (49 checks), re-verified every derived
+statistic in `results/` (MDE/SESOI/CI/hypot-SE/z/p/M\* all reconstruct exactly),
+re-ran the suite (56/56 green), and web-verified the external sources. 46/49
+recomputed checks passed on the first pass; the audit surfaced two doc errors, one
+imprecision, and one genuine (newly documented) data caveat — all fixed. No result
+files changed; the headline claims all stand.**
+
+**1. What tied out exactly (the load-bearing numbers).** Panel 904,589 rows /
+95,572 CUSIPs / 29 quarters; roles 334 / 95,035 / 203; 177/334 `ever_dropped`;
+332/334 with pre+post; H3 split 145 early / 189 late; prereg's raw pre-drift
+806→836 filers (e = −3→−1); S&P arm 123 / 58 both / 65 clean / 787 ever-members /
+99 estimable; events 946/494/452, churn 27 = 13 add + 14 drop → 481 genuine over
+335 CUSIPs, coverage 334/335 with the sole miss = `N/A`; crosswalk 79,944 names,
+135 post-2019 adds → 105 exact + 19 subset + 11 miss (92%), 124 events → 123
+CUSIPs (35137L105 twice); S&P history 754 events (379/375), 1976→2026; FF 15,813
+rows 1963-07-01→2026-04-30; byfiler 38,088 rows / 1,507 CUSIPs, reconciles max
+|Δ| = 0; CEM matched 332 + 101 events; CAR 124 → 99 ok, +1.35%, t 1.55, 54%
+positive; placebo draws 600; every §5 table cell matches its CSV; figure-caption
+peaks (+33 / near +290) match `event_studies.parquet` (33.3 / 286.4); COVID
+q_idx 8081/8082 = 2020Q1/Q2; Makefile targets, `seed=12345`, series ids
+(SUSL S000065418), and code URLs all as documented. CEM balance claim verified
+under the repo's own `match_balance` (max |SMD| 0.045 < 0.05).
+
+**2. Fixed — two doc errors.** (i) `holdings_13f.parquet` holds **105,869**
+distinct CUSIPs, not the 97,660 in DATA_LINEAGE/PROGRESS (rows/quarters were
+exact; the count was a mis-record — no downstream number depends on it: the panel
+drops junk identifiers to 95,572, which was always correct). (ii) **"~2016
+launch" was wrong**: the Extended ESG Leaders index SUSL tracks launched
+**2019-02-27** ([MSCI index page](https://www.msci.com/indexes/index/724001/msci-usa-extended-esg-leaders-index));
+the parent MSCI USA ESG Leaders family launched **June 2013** with computed
+history to **Dec 29, 2000** (per the MSCI factsheet), renamed "MSCI Selection
+Indexes" Feb 2025. The v2 licensed-history claim survives — it reaches *further*
+back than stated — but runs through the parent index. Fixed in paper §7, README
+roadmap, cont. 7 (bracketed).
+
+**3. Fixed — two precision issues.** (i) PSM balance is **≤ 0.15**, not "< 0.15"
+(worst covariate `n_filers` = 0.150); CEM < 0.05 stands. (ii) The ">2 SDs on
+size" naive-imbalance figure (|SMD| ≈ 2.1–2.5) is the **ESG arm**; the S&P arm
+sits at ≈ 1.4–1.8 — now stated per-arm in paper §3 + DATA_LINEAGE. Also tightened
+DATA_LINEAGE's treatment row: SUSA tracks the MSCI USA Extended ESG **Select**
+index (a sibling ESG screen), not the Leaders index itself.
+
+**4. Documented — a genuine data caveat the audit surfaced.** The 2023 13F
+whole-dollar unit fix is period-level, but some filers adopted whole-dollar
+reporting **early**; the ×1000 rule over-scales those rows pre-2023, leaving a
+≈3× step-down in the panel's *median* `total_value_usd` at exactly 2022Q4
+(firm-level Q4/Q3 ratio ≈ 0.33 vs ≈ 1.01 the following quarter; only ~0.05% of
+firms show ×1000-scale jumps, so it is early adopters, not wholesale mixing).
+Absorbed by calendar-quarter FE in log space; `n_filers`/shares immune; one more
+stated reason `log_value` is secondary. Added to DATA_LINEAGE (13F caveat) +
+paper §3. The `log_value` results (a pre-trend-passing ≈0) are unaffected in
+their role: no positive conclusion rests on them.
+
+**5. Sources verified.** References spot-checked against publishers — Rambachan-
+Roth 2023 (REStud 90(5), 2555–2591) and Berg-Kölbel-Rigobon 2022 (Rev. Finance
+26(6), 1315–1344) exact; the remaining eleven are standard citations checked
+against memory of the canonical records. N-PORT public-data start (Apr 2019,
+SEC press release 2017-226) and 13F structured-XML start (2013Q2, SEC 13F data
+sets page) re-confirmed. Wikipedia/Ken-French/SEC URLs in DATA_LINEAGE match the
+code that successfully pulled them.
+
+### Next
+- Repo is submission-ready and now audit-hardened: every public number is
+  machine-reconstructable from the committed results + gitignored data.
+- The one open decision remains v2 licensing (see cont. 7 ### Next).
+
 ## 2026-06-07 (cont. 7) — V2 SCOPING: DECOMPOSED THE BOTTLENECK BEFORE SPENDING EFFORT
 
 **Scoped v2 against the *realised* panel before committing any work — and found the
@@ -37,6 +106,11 @@ Refinitiv) is the single move that both extends the ESG arm back to the index's 
 launch *and* removes the CUSIP-churn measurement error of inferring membership from an
 ETF-holdings diff. Supersedes the cont. 6 §4 generic "widen both arms" roadmap, which
 conflated H2's (cheap, low-value) fix with H3's (structural, licence-gated) one.
+[cont. 8 correction: "~2016 launch" was wrong — the Extended ESG Leaders index SUSL
+tracks launched **Feb 27, 2019**; the pre-2019 history runs through the parent
+**MSCI USA ESG Leaders** index (family launched June 2013, computed history to Dec
+2000; renamed "MSCI Selection Indexes" Feb 2025). The unlock claim survives — it
+reaches *further* back than 2016 — but via the parent index, not the Extended one.]
 
 ### Next
 - The one decision that is the user's: whether to license a non-ETF membership feed.
@@ -519,7 +593,9 @@ abnormal = actual−predicted excess; CAR = sum).
   parses, and aggregates per CUSIP×quarter. Persisted
   `data/interim/holdings_13f.parquet`: **988,292 CUSIP×quarter rows, 29 quarters
   (2019Q1→2026Q1), 97,660 distinct CUSIPs**, n_filers rising ~2,750→6,128 over the
-  window (more institutions filing over time — expected).
+  window (more institutions filing over time — expected). [cont. 8 correction: the
+  file holds **105,869** distinct CUSIPs (97,660 was a mis-count); rows/quarters
+  verified exact. DATA_LINEAGE fixed.]
 - **Coverage check passes:** the 481 genuine ESG inclusions span 335 distinct
   CUSIPs; **334/335 (99.7%) appear in the 13F panel** — the sole miss is an `N/A`
   placeholder CUSIP in the treatment (Phase-2 drop). Treatment ↔ outcome join is

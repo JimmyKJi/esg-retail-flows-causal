@@ -230,8 +230,10 @@ a longer panel" move barely helps the one that matters:
 The **only** real unlock for H3 is a **non-ETF MSCI ESG Leaders membership *history***
 (a clean machine-readable one is licensed — MSCI, Bloomberg, or Refinitiv; MSCI's free
 quarterly review notices give only forward point-in-time add/deletes, not a
-reconstructable back-history): it extends the ESG arm back to the index's ~2016 launch
-*and* removes the CUSIP-churn measurement error of inferring membership from an
+reconstructable back-history): it extends the ESG arm years before the 2019Q1 N-PORT
+floor (the Extended index SUSL tracks launched only in Feb 2019; its parent MSCI USA
+ESG Leaders index carries constituent history from the family's 2013 launch) *and*
+removes the CUSIP-churn measurement error of inferring membership from an
 ETF-holdings diff. That is the single move that converts H3 from *inconclusive*
 to *answered* — and it would **not** overturn the well-powered breadth null.
 
